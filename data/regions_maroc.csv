@@ -1,0 +1,26 @@
+code_ville,nom_ville_standard,province,region_admin,zone_geo,population,code_postal
+TNG,Tanger,Tanger-Assilah,Tanger-Tétouan-Al Hoceïma,Nord,1065058,90000
+TET,Tétouan,Tétouan,Tanger-Tétouan-Al Hoceïma,Nord,380787,93000
+CAS,Casablanca,Casablanca,Casablanca-Settat,Centre,3752000,20000
+RBA,Rabat,Rabat,Rabat-Salé-Kénitra,Centre,577827,10000
+FES,Fès,Fès,Fès-Meknès,Centre-Nord,1112072,30000
+MKN,Meknès,Meknès,Fès-Meknès,Centre-Nord,632079,50000
+MRK,Marrakech,Marrakech,Marrakech-Safi,Centre-Sud,928850,40000
+AGA,Agadir,Agadir-Ida Ou Tanane,Souss-Massa,Sud,421844,80000
+OUJ,Oujda,Oujda-Angad,Oriental,Est,494252,60000
+KEN,Kénitra,Kénitra,Rabat-Salé-Kénitra,Centre,431282,14000
+SAL,Salé,Salé,Rabat-Salé-Kénitra,Centre,890403,11000
+TEM,Témara,Skhirate-Témara,Rabat-Salé-Kénitra,Centre,313510,12000
+NAD,Nador,Nador,Oriental,Est,161726,62000
+BEN,Béni Mellal,Béni Mellal,Béni Mellal-Khénifra,Centre,192676,23000
+ELJ,El Jadida,El Jadida,Casablanca-Settat,Centre,194934,24000
+TAZ,Taza,Taza,Fès-Meknès,Centre-Nord,148406,35000
+SFI,Safi,Safi,Marrakech-Safi,Centre-Sud,308508,46000
+KHO,Khouribga,Khouribga,Béni Mellal-Khénifra,Centre,196196,25000
+SET,Settat,Settat,Casablanca-Settat,Centre,142250,26000
+LAR,Larache,Larache,Tanger-Tétouan-Al Hoceïma,Nord,125008,92000
+HOC,Al Hoceïma,Al Hoceïma,Tanger-Tétouan-Al Hoceïma,Nord,56716,32000
+CHF,Chefchaouen,Chefchaouen,Tanger-Tétouan-Al Hoceïma,Nord,42786,91000
+ESS,Essaouira,Essaouira,Marrakech-Safi,Centre-Sud,77966,44000
+DKH,Dakhla,Oued Ed-Dahab,Dakhla-Oued Ed-Dahab,Sud,106277,73000
+LAY,Laâyoune,Laâyoune,Laâyoune-Sakia El Hamra,Sud,217732,70000
