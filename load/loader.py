@@ -1,20 +1,12 @@
 """
 load/loader.py — PostgreSQL Loading Layer
 ==========================================
-Handles all writes to the data warehouse.
-
 Strategy:
-    - Dimensions : REPLACE (truncate + reload) — dimensions are fully
-      refreshed on each run. This is safe because fact table FKs point
-      to surrogate keys that are stable across runs (generated in Python
-      before load, not by the DB's SERIAL).
-
-    - Fact table : UPSERT (INSERT ... ON CONFLICT DO UPDATE) — new
-      orders are inserted; re-processed orders update existing rows.
-      This allows the pipeline to be re-run safely without duplication.
-
-Important:
-    Schemas must exist before loading. Run create_dwh.sql first.
+    - Dimensions : TRUNCATE RESTART IDENTITY CASCADE then INSERT.
+      Avoids DROP TABLE which fails when FK constraints or materialized
+      views depend on the table.
+    - Fact table : TRUNCATE then bulk INSERT in chunks.
+    - Materialized views : REFRESH after all tables are loaded.
 """
 
 import pandas as pd
@@ -25,15 +17,11 @@ from config.settings import SCHEMA_DWH
 
 logger = get_logger(__name__)
 
-# ── Chunk size for batch inserts ──────────────────────────────────────────
 CHUNK_SIZE = 5_000
 
 
 def get_engine(db_url: str) -> sqlalchemy.Engine:
-    """
-    Create and return a SQLAlchemy engine for PostgreSQL.
-    Tests the connection before returning.
-    """
+    """Create and return a tested SQLAlchemy engine for PostgreSQL."""
     engine = sqlalchemy.create_engine(db_url, pool_pre_ping=True)
     try:
         with engine.connect() as conn:
@@ -51,34 +39,38 @@ def charger_dimension(
     engine: sqlalchemy.Engine,
 ) -> None:
     """
-    Load a dimension table using REPLACE strategy.
-    All existing rows are deleted; new rows are inserted.
+    Load a dimension table safely using TRUNCATE + INSERT.
 
-    Args:
-        df         : Cleaned dimension DataFrame.
-        table_name : Target table name (without schema prefix).
-        engine     : SQLAlchemy engine connected to mexora_dwh.
+    Uses TRUNCATE ... RESTART IDENTITY CASCADE instead of DROP so that
+    FK constraints and materialized views are preserved.
     """
     if df.empty:
-        logger.warning(f"[LOAD] {table_name} : DataFrame vide — chargement ignoré")
+        logger.warning(f"[LOAD] {table_name} : DataFrame vide — ignoré")
         return
 
-    # Convert pandas NA types to None for SQL NULL compatibility
     df = df.where(pd.notna(df), other=None)
+    full_table = f"{SCHEMA_DWH}.{table_name}"
 
     try:
+        with engine.begin() as conn:
+            conn.execute(text(
+                f"TRUNCATE TABLE {full_table} RESTART IDENTITY CASCADE"
+            ))
+        logger.info(f"[LOAD] {table_name:<20} : table vidée (TRUNCATE CASCADE)")
+
         df.to_sql(
             name=table_name,
             con=engine,
             schema=SCHEMA_DWH,
-            if_exists="replace",    # truncate + reload
+            if_exists="append",
             index=False,
             method="multi",
             chunksize=CHUNK_SIZE,
         )
-        logger.info(f"[LOAD] {table_name:<20} : {len(df):,} lignes chargées (replace)")
+        logger.info(f"[LOAD] {table_name:<20} : {len(df):,} lignes chargées")
+
     except Exception as e:
-        logger.error(f"[LOAD] Erreur lors du chargement de {table_name} : {e}")
+        logger.error(f"[LOAD] Erreur chargement {table_name} : {e}")
         raise
 
 
@@ -86,34 +78,20 @@ def charger_faits(
     df: pd.DataFrame,
     engine: sqlalchemy.Engine,
 ) -> None:
-    """
-    Load the fact table using chunked UPSERT.
-
-    Uses pandas to_sql with if_exists='append' after checking for
-    existing rows by id_vente. For a full pipeline re-run, we truncate
-    first (acceptable for a student project; production would use
-    incremental loading by date partition).
-
-    Design note:
-        A proper SQLAlchemy Core UPSERT requires the table to be
-        reflected first. For simplicity and reliability, we truncate
-        + reload the fact table on each full pipeline run.
-        This is documented as a known design decision.
-    """
+    """Load the fact table using TRUNCATE + bulk INSERT."""
     if df.empty:
-        logger.warning("[LOAD] fait_ventes : DataFrame vide — chargement ignoré")
+        logger.warning("[LOAD] fait_ventes : DataFrame vide — ignoré")
         return
 
     df = df.where(pd.notna(df), other=None)
 
-    table_full = f"{SCHEMA_DWH}.fait_ventes"
-
-    # Truncate fact table before reload (full refresh strategy)
-    with engine.begin() as conn:
-        conn.execute(text(f"TRUNCATE TABLE {table_full} RESTART IDENTITY CASCADE"))
-        logger.info(f"[LOAD] fait_ventes : table tronquée avant rechargement")
-
     try:
+        with engine.begin() as conn:
+            conn.execute(text(
+                f"TRUNCATE TABLE {SCHEMA_DWH}.fait_ventes RESTART IDENTITY"
+            ))
+        logger.info("[LOAD] fait_ventes           : table vidée (TRUNCATE)")
+
         df.to_sql(
             name="fait_ventes",
             con=engine,
@@ -124,16 +102,14 @@ def charger_faits(
             chunksize=CHUNK_SIZE,
         )
         logger.info(f"[LOAD] fait_ventes           : {len(df):,} lignes chargées")
+
     except Exception as e:
-        logger.error(f"[LOAD] Erreur lors du chargement de fait_ventes : {e}")
+        logger.error(f"[LOAD] Erreur chargement fait_ventes : {e}")
         raise
 
 
 def refresh_materialized_views(engine: sqlalchemy.Engine) -> None:
-    """
-    Refresh all reporting materialized views after loading.
-    Must be called after the fact table is populated.
-    """
+    """Refresh all reporting materialized views after loading."""
     from config.settings import SCHEMA_REPORTING
     views = [
         f"{SCHEMA_REPORTING}.mv_ca_mensuel",

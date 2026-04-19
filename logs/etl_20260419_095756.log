@@ -1,0 +1,145 @@
+2026-04-19 09:58:00  INFO      main                            ======================================================================
+2026-04-19 09:58:00  INFO      main                              DÉMARRAGE PIPELINE ETL MEXORA
+2026-04-19 09:58:00  INFO      main                              2026-04-19 09:58:00
+2026-04-19 09:58:00  INFO      main                            ======================================================================
+2026-04-19 09:58:00  INFO      main                            --- PHASE 1 : EXTRACT ---
+2026-04-19 09:58:00  INFO      extract.extractor               [EXTRACT] orders     : 51,500 rows from orders_mexora.csv
+2026-04-19 09:58:00  DEBUG     extract.extractor               [EXTRACT] orders columns: ['id_commande', 'id_client', 'id_produit', 'date_commande', 'quantite', 'prix_unitaire', 'statut', 'ville_livraison', 'mode_paiement', 'id_livreur', 'date_livraison']
+2026-04-19 09:58:01  INFO      extract.extractor               [EXTRACT] clients    : 2,980 rows from clients_mexora.csv
+2026-04-19 09:58:01  INFO      extract.extractor               [EXTRACT] products   : 50 rows from products_mexora.json
+2026-04-19 09:58:01  INFO      extract.extractor               [EXTRACT] regions    : 25 rows from regions_maroc.csv
+2026-04-19 09:58:01  INFO      main                            --- PHASE 2 : TRANSFORM ---
+2026-04-19 09:58:01  INFO      transform.clean_commandes       [TRANSFORM] commandes : début avec 51,500 lignes
+2026-04-19 09:58:01  INFO      transform.clean_commandes       [TRANSFORM] R1 doublons      : 1,500 lignes supprimées (2.9%)
+2026-04-19 09:58:04  INFO      transform.clean_commandes       [TRANSFORM] R2 dates (date_commande) : 0 dates invalides → NaT
+2026-04-19 09:58:06  INFO      transform.clean_commandes       [TRANSFORM] R2 dates (date_livraison) : 0 dates invalides → NaT
+2026-04-19 09:58:07  INFO      transform.clean_commandes       [TRANSFORM] R2 dates supprimées : 0 lignes (date_commande invalide)
+2026-04-19 09:58:07  INFO      transform.clean_commandes       [TRANSFORM] R3 villes        : 0 villes non trouvées → 'Non renseignée'
+2026-04-19 09:58:07  INFO      transform.clean_commandes       [TRANSFORM] R5 quantités     : 240 lignes supprimées (quantité ≤ 0)
+2026-04-19 09:58:07  INFO      transform.clean_commandes       [TRANSFORM] R6 prix          : 193 commandes test supprimées (prix = 0)
+2026-04-19 09:58:07  INFO      transform.clean_commandes       [TRANSFORM] R7 livreurs      : 3554 valeurs manquantes → '-1'
+2026-04-19 09:58:07  INFO      transform.clean_commandes       [TRANSFORM] commandes : TERMINÉ  51,500 → 49,567 lignes (1,933 supprimées au total, 3.8%)
+2026-04-19 09:58:07  INFO      transform.clean_clients         [TRANSFORM] clients   : début avec 2,980 lignes
+2026-04-19 09:58:07  INFO      transform.clean_clients         [TRANSFORM] R1 doublons email  : 112 doublons supprimés
+2026-04-19 09:58:07  INFO      transform.clean_clients         [TRANSFORM] R2 sexe            : 0 valeurs non reconnues → 'inconnu'
+2026-04-19 09:58:07  INFO      transform.clean_clients         [TRANSFORM] R3 date_naissance  : 40 âges invalides → NaT
+2026-04-19 09:58:07  INFO      transform.clean_clients         [TRANSFORM] R4 emails          : 38 emails invalides → NULL
+2026-04-19 09:58:07  INFO      transform.clean_clients         [TRANSFORM] clients   : TERMINÉ  2,980 → 2,868 lignes (112 supprimées)
+2026-04-19 09:58:07  INFO      transform.clean_produits        [TRANSFORM] produits  : début avec 50 lignes
+2026-04-19 09:58:07  INFO      transform.clean_produits        [TRANSFORM] R1 normalisation (categorie) : 9 variantes → 3 valeurs uniques
+2026-04-19 09:58:07  INFO      transform.clean_produits        [TRANSFORM] R1 normalisation (sous_categorie) : 21 variantes → 21 valeurs uniques
+2026-04-19 09:58:07  INFO      transform.clean_produits        [TRANSFORM] R2 produits inactifs : 2 produits inactifs conservés pour historique SCD Type 2
+2026-04-19 09:58:07  INFO      transform.clean_produits        [TRANSFORM] R3 prix nuls : 2 prix null → médiane sous-catégorie/catégorie
+2026-04-19 09:58:07  INFO      transform.clean_produits        [TRANSFORM] produits  : TERMINÉ  50 lignes (aucune suppression)
+2026-04-19 09:58:07  INFO      transform.build_dimensions      [BUILD] dim_temps     : 2,192 jours (2020-01-01 → 2025-12-31)
+2026-04-19 09:58:07  INFO      transform.build_dimensions      [BUILD] dim_produit   : 50 produits
+2026-04-19 09:58:07  INFO      transform.build_dimensions      [BUILD] dim_region    : 25 villes
+2026-04-19 09:58:07  INFO      transform.build_dimensions      [BUILD] dim_livreur   : 16 livreurs (dont 1 inconnu)
+2026-04-19 09:58:07  INFO      transform.clean_clients         [TRANSFORM] R5 segmentation    : {'Gold': 1961, 'Bronze': 493, 'Silver': 414}
+2026-04-19 09:58:07  INFO      transform.build_dimensions      [BUILD] dim_client    : 2,869 clients
+2026-04-19 09:58:08  WARNING   transform.build_dimensions      [BUILD] fait_ventes : 1854 clients inconnus → assignés au client générique (sk=0)
+2026-04-19 09:58:08  INFO      transform.build_dimensions      [BUILD] fait_ventes   : 49,567 lignes prêtes pour chargement
+2026-04-19 09:58:08  INFO      main                            --- PHASE 3 : LOAD ---
+2026-04-19 09:58:09  INFO      load.loader                     [LOAD] Connexion PostgreSQL établie
+2026-04-19 09:58:09  ERROR     load.loader                     [LOAD] Erreur lors du chargement de dim_temps : (psycopg2.errors.DependentObjectsStillExist) cannot drop table dwh_mexora.dim_temps because other objects depend on it
+DETAIL:  constraint fait_ventes_id_date_fkey on table dwh_mexora.fait_ventes depends on table dwh_mexora.dim_temps
+materialized view reporting_mexora.mv_ca_mensuel depends on table dwh_mexora.dim_temps
+materialized view reporting_mexora.mv_top_produits depends on table dwh_mexora.dim_temps
+materialized view reporting_mexora.mv_performance_livreurs depends on table dwh_mexora.dim_temps
+HINT:  Use DROP ... CASCADE to drop the dependent objects too.
+
+[SQL: 
+DROP TABLE dwh_mexora.dim_temps]
+(Background on this error at: https://sqlalche.me/e/20/2j85)
+2026-04-19 09:58:09  ERROR     main                            ERREUR FATALE : (psycopg2.errors.DependentObjectsStillExist) cannot drop table dwh_mexora.dim_temps because other objects depend on it
+DETAIL:  constraint fait_ventes_id_date_fkey on table dwh_mexora.fait_ventes depends on table dwh_mexora.dim_temps
+materialized view reporting_mexora.mv_ca_mensuel depends on table dwh_mexora.dim_temps
+materialized view reporting_mexora.mv_top_produits depends on table dwh_mexora.dim_temps
+materialized view reporting_mexora.mv_performance_livreurs depends on table dwh_mexora.dim_temps
+HINT:  Use DROP ... CASCADE to drop the dependent objects too.
+
+[SQL: 
+DROP TABLE dwh_mexora.dim_temps]
+(Background on this error at: https://sqlalche.me/e/20/2j85)
+Traceback (most recent call last):
+  File "C:\Users\HP\AppData\Local\Programs\Python\Python312\Lib\site-packages\sqlalchemy\engine\base.py", line 1967, in _exec_single_context
+    self.dialect.do_execute(
+  File "C:\Users\HP\AppData\Local\Programs\Python\Python312\Lib\site-packages\sqlalchemy\engine\default.py", line 924, in do_execute
+    cursor.execute(statement, parameters)
+psycopg2.errors.DependentObjectsStillExist: cannot drop table dwh_mexora.dim_temps because other objects depend on it
+DETAIL:  constraint fait_ventes_id_date_fkey on table dwh_mexora.fait_ventes depends on table dwh_mexora.dim_temps
+materialized view reporting_mexora.mv_ca_mensuel depends on table dwh_mexora.dim_temps
+materialized view reporting_mexora.mv_top_produits depends on table dwh_mexora.dim_temps
+materialized view reporting_mexora.mv_performance_livreurs depends on table dwh_mexora.dim_temps
+HINT:  Use DROP ... CASCADE to drop the dependent objects too.
+
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "C:\Users\HP\Desktop\mexora_etl\main.py", line 127, in <module>
+    run_pipeline()
+  File "C:\Users\HP\Desktop\mexora_etl\main.py", line 100, in run_pipeline
+    charger_dimension(dim_temps,   "dim_temps",   engine)
+  File "C:\Users\HP\Desktop\mexora_etl\load\loader.py", line 70, in charger_dimension
+    df.to_sql(
+  File "C:\Users\HP\AppData\Local\Programs\Python\Python312\Lib\site-packages\pandas\util\_decorators.py", line 333, in wrapper
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\HP\AppData\Local\Programs\Python\Python312\Lib\site-packages\pandas\core\generic.py", line 3087, in to_sql
+    return sql.to_sql(
+           ^^^^^^^^^^^
+  File "C:\Users\HP\AppData\Local\Programs\Python\Python312\Lib\site-packages\pandas\io\sql.py", line 842, in to_sql
+    return pandas_sql.to_sql(
+           ^^^^^^^^^^^^^^^^^^
+  File "C:\Users\HP\AppData\Local\Programs\Python\Python312\Lib\site-packages\pandas\io\sql.py", line 2008, in to_sql
+    table = self.prep_table(
+            ^^^^^^^^^^^^^^^^
+  File "C:\Users\HP\AppData\Local\Programs\Python\Python312\Lib\site-packages\pandas\io\sql.py", line 1912, in prep_table
+    table.create()
+  File "C:\Users\HP\AppData\Local\Programs\Python\Python312\Lib\site-packages\pandas\io\sql.py", line 988, in create
+    self.pd_sql.drop_table(self.name, self.schema)
+  File "C:\Users\HP\AppData\Local\Programs\Python\Python312\Lib\site-packages\pandas\io\sql.py", line 2063, in drop_table
+    self.get_table(table_name, schema).drop(bind=self.con)
+  File "C:\Users\HP\AppData\Local\Programs\Python\Python312\Lib\site-packages\sqlalchemy\sql\schema.py", line 1300, in drop
+    bind._run_ddl_visitor(ddl.SchemaDropper, self, checkfirst=checkfirst)
+  File "C:\Users\HP\AppData\Local\Programs\Python\Python312\Lib\site-packages\sqlalchemy\engine\base.py", line 2457, in _run_ddl_visitor
+    visitorcallable(self.dialect, self, **kwargs).traverse_single(element)
+  File "C:\Users\HP\AppData\Local\Programs\Python\Python312\Lib\site-packages\sqlalchemy\sql\visitors.py", line 664, in traverse_single
+    return meth(obj, **kw)
+           ^^^^^^^^^^^^^^^
+  File "C:\Users\HP\AppData\Local\Programs\Python\Python312\Lib\site-packages\sqlalchemy\sql\ddl.py", line 1143, in visit_table
+    DropTable(table)._invoke_with(self.connection)
+  File "C:\Users\HP\AppData\Local\Programs\Python\Python312\Lib\site-packages\sqlalchemy\sql\ddl.py", line 314, in _invoke_with
+    return bind.execute(self)
+           ^^^^^^^^^^^^^^^^^^
+  File "C:\Users\HP\AppData\Local\Programs\Python\Python312\Lib\site-packages\sqlalchemy\engine\base.py", line 1418, in execute
+    return meth(
+           ^^^^^
+  File "C:\Users\HP\AppData\Local\Programs\Python\Python312\Lib\site-packages\sqlalchemy\sql\ddl.py", line 180, in _execute_on_connection
+    return connection._execute_ddl(
+           ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\HP\AppData\Local\Programs\Python\Python312\Lib\site-packages\sqlalchemy\engine\base.py", line 1529, in _execute_ddl
+    ret = self._execute_context(
+          ^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\HP\AppData\Local\Programs\Python\Python312\Lib\site-packages\sqlalchemy\engine\base.py", line 1846, in _execute_context
+    return self._exec_single_context(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\HP\AppData\Local\Programs\Python\Python312\Lib\site-packages\sqlalchemy\engine\base.py", line 1986, in _exec_single_context
+    self._handle_dbapi_exception(
+  File "C:\Users\HP\AppData\Local\Programs\Python\Python312\Lib\site-packages\sqlalchemy\engine\base.py", line 2353, in _handle_dbapi_exception
+    raise sqlalchemy_exception.with_traceback(exc_info[2]) from e
+  File "C:\Users\HP\AppData\Local\Programs\Python\Python312\Lib\site-packages\sqlalchemy\engine\base.py", line 1967, in _exec_single_context
+    self.dialect.do_execute(
+  File "C:\Users\HP\AppData\Local\Programs\Python\Python312\Lib\site-packages\sqlalchemy\engine\default.py", line 924, in do_execute
+    cursor.execute(statement, parameters)
+sqlalchemy.exc.InternalError: (psycopg2.errors.DependentObjectsStillExist) cannot drop table dwh_mexora.dim_temps because other objects depend on it
+DETAIL:  constraint fait_ventes_id_date_fkey on table dwh_mexora.fait_ventes depends on table dwh_mexora.dim_temps
+materialized view reporting_mexora.mv_ca_mensuel depends on table dwh_mexora.dim_temps
+materialized view reporting_mexora.mv_top_produits depends on table dwh_mexora.dim_temps
+materialized view reporting_mexora.mv_performance_livreurs depends on table dwh_mexora.dim_temps
+HINT:  Use DROP ... CASCADE to drop the dependent objects too.
+
+[SQL: 
+DROP TABLE dwh_mexora.dim_temps]
+(Background on this error at: https://sqlalche.me/e/20/2j85)
