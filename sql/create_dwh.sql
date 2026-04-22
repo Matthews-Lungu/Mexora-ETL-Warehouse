@@ -76,6 +76,18 @@ CREATE TABLE dwh_mexora.dim_livreur (
     zone_couverture   VARCHAR(100)
 );
 
+-- DIMENSION STATUT COMMANDE
+CREATE TABLE dwh_mexora.dim_statut_commande (
+    id_statut     SERIAL PRIMARY KEY,
+    code_statut   VARCHAR(20)  NOT NULL UNIQUE,
+    libelle       VARCHAR(100) NOT NULL,
+    categorie     VARCHAR(50)  NOT NULL,
+    est_terminal  BOOLEAN      NOT NULL DEFAULT FALSE,
+    est_positif   BOOLEAN      NOT NULL DEFAULT FALSE
+);
+
+COMMENT ON TABLE dwh_mexora.dim_statut_commande IS 
+'Dimension conformed — statuts possibles d''une commande Mexora';
 -- Table de Faits
 CREATE TABLE dwh_mexora.fait_ventes (
     id_vente              BIGSERIAL PRIMARY KEY,
@@ -93,8 +105,7 @@ CREATE TABLE dwh_mexora.fait_ventes (
     remise_pct            DECIMAL(5,2) DEFAULT 0,
     -- Metadata
     date_chargement       TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    statut_commande       VARCHAR(20) CHECK (statut_commande IN ('livré','annulé','en_cours','retourné'))
-);
+    id_statut           INTEGER      REFERENCES dwh_mexora.dim_statut_commande(id_statut));
 
 -- 3. INDEXING
 CREATE INDEX idx_fv_date    ON dwh_mexora.fait_ventes(id_date);
@@ -107,8 +118,7 @@ CREATE INDEX idx_fv_livreur ON dwh_mexora.fait_ventes(id_livreur);
 CREATE INDEX idx_fv_date_region ON dwh_mexora.fait_ventes(id_date, id_region) 
     INCLUDE (montant_ttc, quantite_vendue);
 
-CREATE INDEX idx_fv_statut_actif ON dwh_mexora.fait_ventes(statut_commande) 
-    WHERE statut_commande = 'livré';
+CREATE INDEX idx_fv_statut ON dwh_mexora.fait_ventes(id_statut);
 
 -- 4. MATERIALIZED VIEWS
 -- View 1: Monthly Revenue
@@ -126,7 +136,8 @@ FROM dwh_mexora.fait_ventes f
 JOIN dwh_mexora.dim_temps   t ON f.id_date    = t.id_date
 JOIN dwh_mexora.dim_region  r ON f.id_region  = r.id_region
 JOIN dwh_mexora.dim_produit p ON f.id_produit = p.id_produit_sk
-WHERE f.statut_commande = 'livré'
+JOIN dwh_mexora.dim_statut_commande s ON f.id_statut = s.id_statut
+WHERE s.code_statut = 'livré'
 GROUP BY t.annee, t.mois, t.libelle_mois, t.periode_ramadan, r.region_admin, r.zone_geo, p.categorie
 WITH DATA;
 
@@ -140,7 +151,8 @@ SELECT
 FROM dwh_mexora.fait_ventes f
 JOIN dwh_mexora.dim_temps   t ON f.id_date    = t.id_date
 JOIN dwh_mexora.dim_produit p ON f.id_produit = p.id_produit_sk
-WHERE f.statut_commande = 'livré'
+JOIN dwh_mexora.dim_statut_commande s ON f.id_statut = s.id_statut
+WHERE s.code_statut = 'livré'
 GROUP BY t.annee, t.trimestre, p.nom_produit, p.categorie, p.marque
 WITH DATA;
 
@@ -155,6 +167,7 @@ SELECT
 FROM dwh_mexora.fait_ventes f
 JOIN dwh_mexora.dim_livreur l ON f.id_livreur = l.id_livreur
 JOIN dwh_mexora.dim_temps   t ON f.id_date    = t.id_date
-WHERE f.statut_commande IN ('livré', 'retourné') AND f.delai_livraison_jours IS NOT NULL
+JOIN dwh_mexora.dim_statut_commande s ON f.id_statut = s.id_statut
+WHERE s.code_statut IN ('livré', 'retourné') AND f.delai_livraison_jours IS NOT NULL
 GROUP BY l.nom_livreur, l.zone_couverture, t.annee, t.mois
 WITH DATA;

@@ -38,8 +38,13 @@ from transform.clean_commandes import transform_commandes
 from transform.clean_clients   import transform_clients
 from transform.clean_produits  import transform_produits
 from transform.build_dimensions import (
-    build_dim_temps, build_dim_produit, build_dim_client,
-    build_dim_region, build_dim_livreur, build_fait_ventes,
+    build_dim_temps,
+    build_dim_produit,
+    build_dim_client,
+    build_dim_region,
+    build_dim_livreur,
+    build_dim_statut, 
+    build_fait_ventes,
 )
 from load.loader import get_engine, charger_dimension, charger_faits, refresh_materialized_views
 
@@ -78,6 +83,7 @@ def run_pipeline() -> None:
     df_produits  = transform_produits(df_produits_raw)
 
     # 2b. Build dimension tables
+    dim_statut   = build_dim_statut()
     dim_temps   = build_dim_temps(DIM_TEMPS_START, DIM_TEMPS_END)
     dim_produit = build_dim_produit(df_produits)
     dim_region  = build_dim_region(df_regions)
@@ -97,6 +103,7 @@ def run_pipeline() -> None:
     engine = get_engine(DB_URL)
 
     # Load dimensions first (fact table has FK references)
+    charger_dimension(dim_statut,  "dim_statut_commande", engine)
     charger_dimension(dim_temps,   "dim_temps",   engine)
     charger_dimension(dim_produit, "dim_produit", engine)
     charger_dimension(dim_region,  "dim_region",  engine)

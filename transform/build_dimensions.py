@@ -11,6 +11,7 @@ Functions:
     build_dim_region(df_regions)                        → DataFrame
     build_dim_livreur(df_commandes)                     → DataFrame
     build_fait_ventes(...)                              → DataFrame
+    build_dim_statut(...)                              → DataFrame
 """
 
 import pandas as pd
@@ -279,7 +280,12 @@ def build_fait_ventes(
         "cout_livraison":        0.00,
         "delai_livraison_jours": df["delai_livraison_jours"],
         "remise_pct":            0.00,
-        "statut_commande":       df["statut"],
+        "id_statut":             df["statut"].map({
+                                     "livré":    1,
+                                     "annulé":   2,
+                                     "retourné": 3,
+                                     "en_cours": 4,
+                                 }).fillna(5).astype(int),
     }).reset_index(drop=True)
 
     logger.info(f"[BUILD] fait_ventes   : {len(fait):,} lignes prêtes pour chargement")
@@ -315,3 +321,55 @@ def _build_city_map(df_regions: pd.DataFrame) -> dict[str, str]:
     }
     mapping.update(manual)
     return mapping
+
+def build_dim_statut() -> pd.DataFrame:
+    """
+    Build dim_statut_commande — 5 canonical order statuses.
+    This is a static dimension, no source file needed.
+    """
+    records = [
+        {
+            "id_statut":    1,
+            "code_statut":  "livré",
+            "libelle":      "Commande livrée avec succès",
+            "categorie":    "Complété",
+            "est_terminal": True,
+            "est_positif":  True,
+        },
+        {
+            "id_statut":    2,
+            "code_statut":  "annulé",
+            "libelle":      "Commande annulée",
+            "categorie":    "Annulation",
+            "est_terminal": True,
+            "est_positif":  False,
+        },
+        {
+            "id_statut":    3,
+            "code_statut":  "retourné",
+            "libelle":      "Retour client",
+            "categorie":    "Retour",
+            "est_terminal": True,
+            "est_positif":  False,
+        },
+        {
+            "id_statut":    4,
+            "code_statut":  "en_cours",
+            "libelle":      "En cours de livraison",
+            "categorie":    "Actif",
+            "est_terminal": False,
+            "est_positif":  True,
+        },
+        {
+            "id_statut":    5,
+            "code_statut":  "inconnu",
+            "libelle":      "Statut non renseigné",
+            "categorie":    "Inconnu",
+            "est_terminal": False,
+            "est_positif":  False,
+        },
+    ]
+
+    df = pd.DataFrame(records)
+    logger.info(f"[BUILD] dim_statut    : {len(df)} statuts définis")
+    return df
