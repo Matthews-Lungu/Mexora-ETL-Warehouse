@@ -1,0 +1,93 @@
+2026-04-22 20:21:47  INFO      main                            ======================================================================
+2026-04-22 20:21:47  INFO      main                              DÉMARRAGE PIPELINE ETL MEXORA
+2026-04-22 20:21:47  INFO      main                              2026-04-22 20:21:47
+2026-04-22 20:21:47  INFO      main                            ======================================================================
+2026-04-22 20:21:47  INFO      main                            --- PHASE 1 : EXTRACT ---
+2026-04-22 20:21:48  INFO      extract.extractor               [EXTRACT] orders     : 51,500 rows from orders_mexora.csv
+2026-04-22 20:21:48  DEBUG     extract.extractor               [EXTRACT] orders columns: ['id_commande', 'id_client', 'id_produit', 'date_commande', 'quantite', 'prix_unitaire', 'statut', 'ville_livraison', 'mode_paiement', 'id_livreur', 'date_livraison']
+2026-04-22 20:21:48  INFO      extract.extractor               [EXTRACT] clients    : 2,980 rows from clients_mexora.csv
+2026-04-22 20:21:48  INFO      extract.extractor               [EXTRACT] products   : 50 rows from products_mexora.json
+2026-04-22 20:21:48  INFO      extract.extractor               [EXTRACT] regions    : 25 rows from regions_maroc.csv
+2026-04-22 20:21:48  INFO      main                            --- PHASE 2 : TRANSFORM ---
+2026-04-22 20:21:48  INFO      transform.clean_commandes       [TRANSFORM] commandes : début avec 51,500 lignes
+2026-04-22 20:21:48  INFO      transform.clean_commandes       [TRANSFORM] R1 doublons      : 1,500 lignes supprimées (2.9%)
+2026-04-22 20:21:55  INFO      transform.clean_commandes       [TRANSFORM] R2 dates (date_commande) : 0 dates invalides → NaT
+2026-04-22 20:22:01  INFO      transform.clean_commandes       [TRANSFORM] R2 dates (date_livraison) : 0 dates invalides → NaT
+2026-04-22 20:22:01  INFO      transform.clean_commandes       [TRANSFORM] R2 dates supprimées : 0 lignes (date_commande invalide)
+2026-04-22 20:22:01  INFO      transform.clean_commandes       [TRANSFORM] R3 villes        : 0 villes non trouvées → 'Non renseignée'
+2026-04-22 20:22:01  INFO      transform.clean_commandes       [TRANSFORM] R5 quantités     : 240 lignes supprimées (quantité ≤ 0)
+2026-04-22 20:22:01  INFO      transform.clean_commandes       [TRANSFORM] R6 prix          : 193 commandes test supprimées (prix = 0)
+2026-04-22 20:22:01  INFO      transform.clean_commandes       [TRANSFORM] R7 livreurs      : 3554 valeurs manquantes → '-1'
+2026-04-22 20:22:02  INFO      transform.clean_commandes       [TRANSFORM] commandes : TERMINÉ  51,500 → 49,567 lignes (1,933 supprimées au total, 3.8%)
+2026-04-22 20:22:02  INFO      transform.clean_clients         [TRANSFORM] clients   : début avec 2,980 lignes
+2026-04-22 20:22:02  INFO      transform.clean_clients         [TRANSFORM] R1 doublons email  : 112 doublons supprimés
+2026-04-22 20:22:02  INFO      transform.clean_clients         [TRANSFORM] R2 sexe            : 0 valeurs non reconnues → 'inconnu'
+2026-04-22 20:22:02  INFO      transform.clean_clients         [TRANSFORM] R3 date_naissance  : 40 âges invalides → NaT
+2026-04-22 20:22:02  INFO      transform.clean_clients         [TRANSFORM] R4 emails          : 38 emails invalides → NULL
+2026-04-22 20:22:02  INFO      transform.clean_clients         [TRANSFORM] clients   : TERMINÉ  2,980 → 2,868 lignes (112 supprimées)
+2026-04-22 20:22:02  INFO      transform.clean_produits        [TRANSFORM] produits  : début avec 50 lignes
+2026-04-22 20:22:02  INFO      transform.clean_produits        [TRANSFORM] R1 normalisation (categorie) : 9 variantes → 3 valeurs uniques
+2026-04-22 20:22:02  INFO      transform.clean_produits        [TRANSFORM] R1 normalisation (sous_categorie) : 21 variantes → 21 valeurs uniques
+2026-04-22 20:22:02  INFO      transform.clean_produits        [TRANSFORM] R2 produits inactifs : 2 produits inactifs conservés pour historique SCD Type 2
+2026-04-22 20:22:02  INFO      transform.clean_produits        [TRANSFORM] R3 prix nuls : 2 prix null → médiane sous-catégorie/catégorie
+2026-04-22 20:22:02  INFO      transform.clean_produits        [TRANSFORM] produits  : TERMINÉ  50 lignes (aucune suppression)
+2026-04-22 20:22:02  INFO      transform.build_dimensions      [BUILD] dim_statut    : 5 statuts définis
+2026-04-22 20:22:02  INFO      transform.build_dimensions      [BUILD] dim_temps     : 2,192 jours (2020-01-01 → 2025-12-31)
+2026-04-22 20:22:02  INFO      transform.build_dimensions      [BUILD] dim_produit   : 50 produits
+2026-04-22 20:22:02  INFO      transform.build_dimensions      [BUILD] dim_region    : 25 villes
+2026-04-22 20:22:02  INFO      transform.build_dimensions      [BUILD] dim_livreur   : 16 livreurs (dont 1 inconnu)
+2026-04-22 20:22:03  INFO      transform.clean_clients         [TRANSFORM] R5 segmentation    : {'Gold': 1961, 'Bronze': 493, 'Silver': 414}
+2026-04-22 20:22:03  INFO      transform.build_dimensions      [BUILD] dim_client    : 2,869 clients
+2026-04-22 20:22:04  WARNING   transform.build_dimensions      [BUILD] fait_ventes : 1854 clients inconnus → assignés au client générique (sk=0)
+2026-04-22 20:22:04  INFO      transform.build_dimensions      [BUILD] fait_ventes   : 49,567 lignes prêtes pour chargement
+2026-04-22 20:22:04  INFO      main                            --- PHASE 3 : LOAD ---
+2026-04-22 20:22:05  INFO      load.loader                     [LOAD] Connexion PostgreSQL établie
+2026-04-22 20:22:05  ERROR     load.loader                     [LOAD] Erreur chargement dim_statut_commande : (psycopg2.errors.UndefinedTable) relation "dwh_mexora.dim_statut_commande" does not exist
+
+[SQL: TRUNCATE TABLE dwh_mexora.dim_statut_commande RESTART IDENTITY CASCADE]
+(Background on this error at: https://sqlalche.me/e/20/f405)
+2026-04-22 20:22:05  ERROR     main                            ERREUR FATALE : (psycopg2.errors.UndefinedTable) relation "dwh_mexora.dim_statut_commande" does not exist
+
+[SQL: TRUNCATE TABLE dwh_mexora.dim_statut_commande RESTART IDENTITY CASCADE]
+(Background on this error at: https://sqlalche.me/e/20/f405)
+Traceback (most recent call last):
+  File "C:\Users\HP\AppData\Local\Programs\Python\Python312\Lib\site-packages\sqlalchemy\engine\base.py", line 1967, in _exec_single_context
+    self.dialect.do_execute(
+  File "C:\Users\HP\AppData\Local\Programs\Python\Python312\Lib\site-packages\sqlalchemy\engine\default.py", line 924, in do_execute
+    cursor.execute(statement, parameters)
+psycopg2.errors.UndefinedTable: relation "dwh_mexora.dim_statut_commande" does not exist
+
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "C:\xampp\htdocs\mexora_etl\main.py", line 134, in <module>
+    run_pipeline()
+  File "C:\xampp\htdocs\mexora_etl\main.py", line 106, in run_pipeline
+    charger_dimension(dim_statut,  "dim_statut_commande", engine)
+  File "C:\xampp\htdocs\mexora_etl\load\loader.py", line 56, in charger_dimension
+    conn.execute(text(
+  File "C:\Users\HP\AppData\Local\Programs\Python\Python312\Lib\site-packages\sqlalchemy\engine\base.py", line 1418, in execute
+    return meth(
+           ^^^^^
+  File "C:\Users\HP\AppData\Local\Programs\Python\Python312\Lib\site-packages\sqlalchemy\sql\elements.py", line 515, in _execute_on_connection
+    return connection._execute_clauseelement(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\HP\AppData\Local\Programs\Python\Python312\Lib\site-packages\sqlalchemy\engine\base.py", line 1640, in _execute_clauseelement
+    ret = self._execute_context(
+          ^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\HP\AppData\Local\Programs\Python\Python312\Lib\site-packages\sqlalchemy\engine\base.py", line 1846, in _execute_context
+    return self._exec_single_context(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\HP\AppData\Local\Programs\Python\Python312\Lib\site-packages\sqlalchemy\engine\base.py", line 1986, in _exec_single_context
+    self._handle_dbapi_exception(
+  File "C:\Users\HP\AppData\Local\Programs\Python\Python312\Lib\site-packages\sqlalchemy\engine\base.py", line 2353, in _handle_dbapi_exception
+    raise sqlalchemy_exception.with_traceback(exc_info[2]) from e
+  File "C:\Users\HP\AppData\Local\Programs\Python\Python312\Lib\site-packages\sqlalchemy\engine\base.py", line 1967, in _exec_single_context
+    self.dialect.do_execute(
+  File "C:\Users\HP\AppData\Local\Programs\Python\Python312\Lib\site-packages\sqlalchemy\engine\default.py", line 924, in do_execute
+    cursor.execute(statement, parameters)
+sqlalchemy.exc.ProgrammingError: (psycopg2.errors.UndefinedTable) relation "dwh_mexora.dim_statut_commande" does not exist
+
+[SQL: TRUNCATE TABLE dwh_mexora.dim_statut_commande RESTART IDENTITY CASCADE]
+(Background on this error at: https://sqlalche.me/e/20/f405)

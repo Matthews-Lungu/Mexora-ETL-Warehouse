@@ -1,0 +1,160 @@
+2026-04-22 19:06:04  INFO      main                            ======================================================================
+2026-04-22 19:06:04  INFO      main                              DÉMARRAGE PIPELINE ETL MEXORA
+2026-04-22 19:06:04  INFO      main                              2026-04-22 19:06:04
+2026-04-22 19:06:04  INFO      main                            ======================================================================
+2026-04-22 19:06:04  INFO      main                            --- PHASE 1 : EXTRACT ---
+2026-04-22 19:06:05  INFO      extract.extractor               [EXTRACT] orders     : 51,500 rows from orders_mexora.csv
+2026-04-22 19:06:05  DEBUG     extract.extractor               [EXTRACT] orders columns: ['id_commande', 'id_client', 'id_produit', 'date_commande', 'quantite', 'prix_unitaire', 'statut', 'ville_livraison', 'mode_paiement', 'id_livreur', 'date_livraison']
+2026-04-22 19:06:05  INFO      extract.extractor               [EXTRACT] clients    : 2,980 rows from clients_mexora.csv
+2026-04-22 19:06:05  INFO      extract.extractor               [EXTRACT] products   : 50 rows from products_mexora.json
+2026-04-22 19:06:05  INFO      extract.extractor               [EXTRACT] regions    : 25 rows from regions_maroc.csv
+2026-04-22 19:06:05  INFO      main                            --- PHASE 2 : TRANSFORM ---
+2026-04-22 19:06:05  INFO      transform.clean_commandes       [TRANSFORM] commandes : début avec 51,500 lignes
+2026-04-22 19:06:05  INFO      transform.clean_commandes       [TRANSFORM] R1 doublons      : 1,500 lignes supprimées (2.9%)
+2026-04-22 19:06:10  INFO      transform.clean_commandes       [TRANSFORM] R2 dates (date_commande) : 0 dates invalides → NaT
+2026-04-22 19:06:16  INFO      transform.clean_commandes       [TRANSFORM] R2 dates (date_livraison) : 0 dates invalides → NaT
+2026-04-22 19:06:16  INFO      transform.clean_commandes       [TRANSFORM] R2 dates supprimées : 0 lignes (date_commande invalide)
+2026-04-22 19:06:16  INFO      transform.clean_commandes       [TRANSFORM] R3 villes        : 0 villes non trouvées → 'Non renseignée'
+2026-04-22 19:06:16  INFO      transform.clean_commandes       [TRANSFORM] R5 quantités     : 240 lignes supprimées (quantité ≤ 0)
+2026-04-22 19:06:16  INFO      transform.clean_commandes       [TRANSFORM] R6 prix          : 193 commandes test supprimées (prix = 0)
+2026-04-22 19:06:16  INFO      transform.clean_commandes       [TRANSFORM] R7 livreurs      : 3554 valeurs manquantes → '-1'
+2026-04-22 19:06:17  INFO      transform.clean_commandes       [TRANSFORM] commandes : TERMINÉ  51,500 → 49,567 lignes (1,933 supprimées au total, 3.8%)
+2026-04-22 19:06:17  INFO      transform.clean_clients         [TRANSFORM] clients   : début avec 2,980 lignes
+2026-04-22 19:06:17  INFO      transform.clean_clients         [TRANSFORM] R1 doublons email  : 112 doublons supprimés
+2026-04-22 19:06:17  INFO      transform.clean_clients         [TRANSFORM] R2 sexe            : 0 valeurs non reconnues → 'inconnu'
+2026-04-22 19:06:17  INFO      transform.clean_clients         [TRANSFORM] R3 date_naissance  : 40 âges invalides → NaT
+2026-04-22 19:06:17  INFO      transform.clean_clients         [TRANSFORM] R4 emails          : 38 emails invalides → NULL
+2026-04-22 19:06:17  INFO      transform.clean_clients         [TRANSFORM] clients   : TERMINÉ  2,980 → 2,868 lignes (112 supprimées)
+2026-04-22 19:06:17  INFO      transform.clean_produits        [TRANSFORM] produits  : début avec 50 lignes
+2026-04-22 19:06:17  INFO      transform.clean_produits        [TRANSFORM] R1 normalisation (categorie) : 9 variantes → 3 valeurs uniques
+2026-04-22 19:06:17  INFO      transform.clean_produits        [TRANSFORM] R1 normalisation (sous_categorie) : 21 variantes → 21 valeurs uniques
+2026-04-22 19:06:17  INFO      transform.clean_produits        [TRANSFORM] R2 produits inactifs : 2 produits inactifs conservés pour historique SCD Type 2
+2026-04-22 19:06:17  INFO      transform.clean_produits        [TRANSFORM] R3 prix nuls : 2 prix null → médiane sous-catégorie/catégorie
+2026-04-22 19:06:17  INFO      transform.clean_produits        [TRANSFORM] produits  : TERMINÉ  50 lignes (aucune suppression)
+2026-04-22 19:06:17  INFO      transform.build_dimensions      [BUILD] dim_statut    : 5 statuts définis
+2026-04-22 19:06:17  INFO      transform.build_dimensions      [BUILD] dim_temps     : 2,192 jours (2020-01-01 → 2025-12-31)
+2026-04-22 19:06:17  INFO      transform.build_dimensions      [BUILD] dim_produit   : 50 produits
+2026-04-22 19:06:17  INFO      transform.build_dimensions      [BUILD] dim_region    : 25 villes
+2026-04-22 19:06:17  INFO      transform.build_dimensions      [BUILD] dim_livreur   : 16 livreurs (dont 1 inconnu)
+2026-04-22 19:06:17  INFO      transform.clean_clients         [TRANSFORM] R5 segmentation    : {'Gold': 1961, 'Bronze': 493, 'Silver': 414}
+2026-04-22 19:06:17  INFO      transform.build_dimensions      [BUILD] dim_client    : 2,869 clients
+2026-04-22 19:06:19  WARNING   transform.build_dimensions      [BUILD] fait_ventes : 1854 clients inconnus → assignés au client générique (sk=0)
+2026-04-22 19:06:19  INFO      transform.build_dimensions      [BUILD] fait_ventes   : 49,567 lignes prêtes pour chargement
+2026-04-22 19:06:19  INFO      main                            --- PHASE 3 : LOAD ---
+2026-04-22 19:06:19  ERROR     load.loader                     [LOAD] Échec de connexion PostgreSQL : (psycopg2.OperationalError) connection to server at "localhost" (::1), port 5432 failed: FATAL:  password authentication failed for user "postgres"
+
+(Background on this error at: https://sqlalche.me/e/20/e3q8)
+2026-04-22 19:06:19  ERROR     main                            ERREUR FATALE : (psycopg2.OperationalError) connection to server at "localhost" (::1), port 5432 failed: FATAL:  password authentication failed for user "postgres"
+
+(Background on this error at: https://sqlalche.me/e/20/e3q8)
+Traceback (most recent call last):
+  File "C:\Users\HP\AppData\Local\Programs\Python\Python312\Lib\site-packages\sqlalchemy\engine\base.py", line 146, in __init__
+    self._dbapi_connection = engine.raw_connection()
+                             ^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\HP\AppData\Local\Programs\Python\Python312\Lib\site-packages\sqlalchemy\engine\base.py", line 3300, in raw_connection
+    return self.pool.connect()
+           ^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\HP\AppData\Local\Programs\Python\Python312\Lib\site-packages\sqlalchemy\pool\base.py", line 449, in connect
+    return _ConnectionFairy._checkout(self)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\HP\AppData\Local\Programs\Python\Python312\Lib\site-packages\sqlalchemy\pool\base.py", line 1263, in _checkout
+    fairy = _ConnectionRecord.checkout(pool)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\HP\AppData\Local\Programs\Python\Python312\Lib\site-packages\sqlalchemy\pool\base.py", line 712, in checkout
+    rec = pool._do_get()
+          ^^^^^^^^^^^^^^
+  File "C:\Users\HP\AppData\Local\Programs\Python\Python312\Lib\site-packages\sqlalchemy\pool\impl.py", line 179, in _do_get
+    with util.safe_reraise():
+  File "C:\Users\HP\AppData\Local\Programs\Python\Python312\Lib\site-packages\sqlalchemy\util\langhelpers.py", line 146, in __exit__
+    raise exc_value.with_traceback(exc_tb)
+  File "C:\Users\HP\AppData\Local\Programs\Python\Python312\Lib\site-packages\sqlalchemy\pool\impl.py", line 177, in _do_get
+    return self._create_connection()
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\HP\AppData\Local\Programs\Python\Python312\Lib\site-packages\sqlalchemy\pool\base.py", line 390, in _create_connection
+    return _ConnectionRecord(self)
+           ^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\HP\AppData\Local\Programs\Python\Python312\Lib\site-packages\sqlalchemy\pool\base.py", line 674, in __init__
+    self.__connect()
+  File "C:\Users\HP\AppData\Local\Programs\Python\Python312\Lib\site-packages\sqlalchemy\pool\base.py", line 900, in __connect
+    with util.safe_reraise():
+  File "C:\Users\HP\AppData\Local\Programs\Python\Python312\Lib\site-packages\sqlalchemy\util\langhelpers.py", line 146, in __exit__
+    raise exc_value.with_traceback(exc_tb)
+  File "C:\Users\HP\AppData\Local\Programs\Python\Python312\Lib\site-packages\sqlalchemy\pool\base.py", line 896, in __connect
+    self.dbapi_connection = connection = pool._invoke_creator(self)
+                                         ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\HP\AppData\Local\Programs\Python\Python312\Lib\site-packages\sqlalchemy\engine\create.py", line 643, in connect
+    return dialect.connect(*cargs, **cparams)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\HP\AppData\Local\Programs\Python\Python312\Lib\site-packages\sqlalchemy\engine\default.py", line 620, in connect
+    return self.loaded_dbapi.connect(*cargs, **cparams)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\HP\AppData\Local\Programs\Python\Python312\Lib\site-packages\psycopg2\__init__.py", line 122, in connect
+    conn = _connect(dsn, connection_factory=connection_factory, **kwasync)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+psycopg2.OperationalError: connection to server at "localhost" (::1), port 5432 failed: FATAL:  password authentication failed for user "postgres"
+
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "C:\xampp\htdocs\mexora_etl\main.py", line 134, in <module>
+    run_pipeline()
+  File "C:\xampp\htdocs\mexora_etl\main.py", line 103, in run_pipeline
+    engine = get_engine(DB_URL)
+             ^^^^^^^^^^^^^^^^^^
+  File "C:\xampp\htdocs\mexora_etl\load\loader.py", line 27, in get_engine
+    with engine.connect() as conn:
+         ^^^^^^^^^^^^^^^^
+  File "C:\Users\HP\AppData\Local\Programs\Python\Python312\Lib\site-packages\sqlalchemy\engine\base.py", line 3276, in connect
+    return self._connection_cls(self)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\HP\AppData\Local\Programs\Python\Python312\Lib\site-packages\sqlalchemy\engine\base.py", line 148, in __init__
+    Connection._handle_dbapi_exception_noconnection(
+  File "C:\Users\HP\AppData\Local\Programs\Python\Python312\Lib\site-packages\sqlalchemy\engine\base.py", line 2440, in _handle_dbapi_exception_noconnection
+    raise sqlalchemy_exception.with_traceback(exc_info[2]) from e
+  File "C:\Users\HP\AppData\Local\Programs\Python\Python312\Lib\site-packages\sqlalchemy\engine\base.py", line 146, in __init__
+    self._dbapi_connection = engine.raw_connection()
+                             ^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\HP\AppData\Local\Programs\Python\Python312\Lib\site-packages\sqlalchemy\engine\base.py", line 3300, in raw_connection
+    return self.pool.connect()
+           ^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\HP\AppData\Local\Programs\Python\Python312\Lib\site-packages\sqlalchemy\pool\base.py", line 449, in connect
+    return _ConnectionFairy._checkout(self)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\HP\AppData\Local\Programs\Python\Python312\Lib\site-packages\sqlalchemy\pool\base.py", line 1263, in _checkout
+    fairy = _ConnectionRecord.checkout(pool)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\HP\AppData\Local\Programs\Python\Python312\Lib\site-packages\sqlalchemy\pool\base.py", line 712, in checkout
+    rec = pool._do_get()
+          ^^^^^^^^^^^^^^
+  File "C:\Users\HP\AppData\Local\Programs\Python\Python312\Lib\site-packages\sqlalchemy\pool\impl.py", line 179, in _do_get
+    with util.safe_reraise():
+  File "C:\Users\HP\AppData\Local\Programs\Python\Python312\Lib\site-packages\sqlalchemy\util\langhelpers.py", line 146, in __exit__
+    raise exc_value.with_traceback(exc_tb)
+  File "C:\Users\HP\AppData\Local\Programs\Python\Python312\Lib\site-packages\sqlalchemy\pool\impl.py", line 177, in _do_get
+    return self._create_connection()
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\HP\AppData\Local\Programs\Python\Python312\Lib\site-packages\sqlalchemy\pool\base.py", line 390, in _create_connection
+    return _ConnectionRecord(self)
+           ^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\HP\AppData\Local\Programs\Python\Python312\Lib\site-packages\sqlalchemy\pool\base.py", line 674, in __init__
+    self.__connect()
+  File "C:\Users\HP\AppData\Local\Programs\Python\Python312\Lib\site-packages\sqlalchemy\pool\base.py", line 900, in __connect
+    with util.safe_reraise():
+  File "C:\Users\HP\AppData\Local\Programs\Python\Python312\Lib\site-packages\sqlalchemy\util\langhelpers.py", line 146, in __exit__
+    raise exc_value.with_traceback(exc_tb)
+  File "C:\Users\HP\AppData\Local\Programs\Python\Python312\Lib\site-packages\sqlalchemy\pool\base.py", line 896, in __connect
+    self.dbapi_connection = connection = pool._invoke_creator(self)
+                                         ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\HP\AppData\Local\Programs\Python\Python312\Lib\site-packages\sqlalchemy\engine\create.py", line 643, in connect
+    return dialect.connect(*cargs, **cparams)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\HP\AppData\Local\Programs\Python\Python312\Lib\site-packages\sqlalchemy\engine\default.py", line 620, in connect
+    return self.loaded_dbapi.connect(*cargs, **cparams)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\HP\AppData\Local\Programs\Python\Python312\Lib\site-packages\psycopg2\__init__.py", line 122, in connect
+    conn = _connect(dsn, connection_factory=connection_factory, **kwasync)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+sqlalchemy.exc.OperationalError: (psycopg2.OperationalError) connection to server at "localhost" (::1), port 5432 failed: FATAL:  password authentication failed for user "postgres"
+
+(Background on this error at: https://sqlalche.me/e/20/e3q8)
