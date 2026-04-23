@@ -1,0 +1,66 @@
+2026-04-23 14:31:05  INFO      main                            ======================================================================
+2026-04-23 14:31:05  INFO      main                              DÉMARRAGE PIPELINE ETL MEXORA
+2026-04-23 14:31:05  INFO      main                              2026-04-23 14:31:05
+2026-04-23 14:31:05  INFO      main                            ======================================================================
+2026-04-23 14:31:05  INFO      main                            --- PHASE 1 : EXTRACT ---
+2026-04-23 14:31:05  INFO      extract.extractor               [EXTRACT] orders     : 51,500 rows from orders_mexora.csv
+2026-04-23 14:31:05  DEBUG     extract.extractor               [EXTRACT] orders columns: ['id_commande', 'id_client', 'id_produit', 'date_commande', 'quantite', 'prix_unitaire', 'statut', 'ville_livraison', 'mode_paiement', 'id_livreur', 'date_livraison']
+2026-04-23 14:31:05  INFO      extract.extractor               [EXTRACT] clients    : 2,980 rows from clients_mexora.csv
+2026-04-23 14:31:05  INFO      extract.extractor               [EXTRACT] products   : 50 rows from products_mexora.json
+2026-04-23 14:31:05  INFO      extract.extractor               [EXTRACT] regions    : 25 rows from regions_maroc.csv
+2026-04-23 14:31:05  INFO      main                            --- PHASE 2 : TRANSFORM ---
+2026-04-23 14:31:05  INFO      transform.clean_commandes       [TRANSFORM] commandes : début avec 51,500 lignes
+2026-04-23 14:31:05  INFO      transform.clean_commandes       [TRANSFORM] R1 doublons      : 1,500 lignes supprimées (2.9%)
+2026-04-23 14:31:08  INFO      transform.clean_commandes       [TRANSFORM] R2 dates (date_commande) : 0 dates invalides → NaT
+2026-04-23 14:31:11  INFO      transform.clean_commandes       [TRANSFORM] R2 dates (date_livraison) : 0 dates invalides → NaT
+2026-04-23 14:31:11  INFO      transform.clean_commandes       [TRANSFORM] R2 dates supprimées : 0 lignes (date_commande invalide)
+2026-04-23 14:31:11  INFO      transform.clean_commandes       [TRANSFORM] R3 villes        : 0 villes non trouvées → 'Non renseignée'
+2026-04-23 14:31:11  INFO      transform.clean_commandes       [TRANSFORM] R5 quantités     : 240 lignes supprimées (quantité ≤ 0)
+2026-04-23 14:31:12  INFO      transform.clean_commandes       [TRANSFORM] R6 prix          : 193 commandes test supprimées (prix = 0)
+2026-04-23 14:31:12  INFO      transform.clean_commandes       [TRANSFORM] R7 livreurs      : 3554 valeurs manquantes → '-1'
+2026-04-23 14:31:12  INFO      transform.clean_commandes       [TRANSFORM] commandes : TERMINÉ  51,500 → 49,567 lignes (1,933 supprimées au total, 3.8%)
+2026-04-23 14:31:12  INFO      transform.clean_clients         [TRANSFORM] clients   : début avec 2,980 lignes
+2026-04-23 14:31:12  INFO      transform.clean_clients         [TRANSFORM] R1 doublons email  : 112 doublons supprimés
+2026-04-23 14:31:12  INFO      transform.clean_clients         [TRANSFORM] R2 sexe            : 0 valeurs non reconnues → 'inconnu'
+2026-04-23 14:31:12  INFO      transform.clean_clients         [TRANSFORM] R3 date_naissance  : 40 âges invalides → NaT
+2026-04-23 14:31:12  INFO      transform.clean_clients         [TRANSFORM] R4 emails          : 38 emails invalides → NULL
+2026-04-23 14:31:12  INFO      transform.clean_clients         [TRANSFORM] clients   : TERMINÉ  2,980 → 2,868 lignes (112 supprimées)
+2026-04-23 14:31:12  INFO      transform.clean_produits        [TRANSFORM] produits  : début avec 50 lignes
+2026-04-23 14:31:12  INFO      transform.clean_produits        [TRANSFORM] R1 normalisation (categorie) : 9 variantes → 3 valeurs uniques
+2026-04-23 14:31:12  INFO      transform.clean_produits        [TRANSFORM] R1 normalisation (sous_categorie) : 21 variantes → 21 valeurs uniques
+2026-04-23 14:31:12  INFO      transform.clean_produits        [TRANSFORM] R2 produits inactifs : 2 produits inactifs conservés pour historique SCD Type 2
+2026-04-23 14:31:12  INFO      transform.clean_produits        [TRANSFORM] R3 prix nuls : 2 prix null → médiane sous-catégorie/catégorie
+2026-04-23 14:31:12  INFO      transform.clean_produits        [TRANSFORM] produits  : TERMINÉ  50 lignes (aucune suppression)
+2026-04-23 14:31:12  INFO      transform.build_dimensions      [BUILD] dim_statut    : 5 statuts définis
+2026-04-23 14:31:12  INFO      transform.build_dimensions      [BUILD] dim_temps     : 2,192 jours (2020-01-01 → 2025-12-31)
+2026-04-23 14:31:12  INFO      transform.build_dimensions      [BUILD] dim_produit   : 50 produits
+2026-04-23 14:31:12  INFO      transform.build_dimensions      [BUILD] dim_region    : 25 villes
+2026-04-23 14:31:12  INFO      transform.build_dimensions      [BUILD] dim_livreur   : 16 livreurs (dont 1 inconnu)
+2026-04-23 14:31:12  INFO      transform.clean_clients         [TRANSFORM] R5 segmentation    : {'Gold': 1961, 'Bronze': 493, 'Silver': 414}
+2026-04-23 14:31:12  INFO      transform.build_dimensions      [BUILD] dim_client    : 2,869 clients
+2026-04-23 14:31:13  WARNING   transform.build_dimensions      [BUILD] fait_ventes : 1854 clients inconnus → assignés au client générique (sk=0)
+2026-04-23 14:31:13  INFO      transform.build_dimensions      [BUILD] fait_ventes   : 49,567 lignes prêtes pour chargement
+2026-04-23 14:31:13  INFO      main                            --- PHASE 3 : LOAD ---
+2026-04-23 14:31:14  INFO      load.loader                     [LOAD] Connexion PostgreSQL établie
+2026-04-23 14:31:14  INFO      load.loader                     [LOAD] dim_statut_commande  : table vidée (TRUNCATE CASCADE)
+2026-04-23 14:31:14  INFO      load.loader                     [LOAD] dim_statut_commande  : 5 lignes chargées
+2026-04-23 14:31:14  INFO      load.loader                     [LOAD] dim_temps            : table vidée (TRUNCATE CASCADE)
+2026-04-23 14:31:15  INFO      load.loader                     [LOAD] dim_temps            : 2,192 lignes chargées
+2026-04-23 14:31:15  INFO      load.loader                     [LOAD] dim_produit          : table vidée (TRUNCATE CASCADE)
+2026-04-23 14:31:15  INFO      load.loader                     [LOAD] dim_produit          : 50 lignes chargées
+2026-04-23 14:31:16  INFO      load.loader                     [LOAD] dim_region           : table vidée (TRUNCATE CASCADE)
+2026-04-23 14:31:16  INFO      load.loader                     [LOAD] dim_region           : 25 lignes chargées
+2026-04-23 14:31:16  INFO      load.loader                     [LOAD] dim_livreur          : table vidée (TRUNCATE CASCADE)
+2026-04-23 14:31:16  INFO      load.loader                     [LOAD] dim_livreur          : 16 lignes chargées
+2026-04-23 14:31:16  INFO      load.loader                     [LOAD] dim_client           : table vidée (TRUNCATE CASCADE)
+2026-04-23 14:31:18  INFO      load.loader                     [LOAD] dim_client           : 2,869 lignes chargées
+2026-04-23 14:31:18  INFO      load.loader                     [LOAD] fait_ventes           : table vidée (TRUNCATE)
+2026-04-23 14:32:04  INFO      load.loader                     [LOAD] fait_ventes           : 49,567 lignes chargées
+2026-04-23 14:32:04  INFO      main                            --- PHASE 4 : REFRESH VUES MATÉRIALISÉES ---
+2026-04-23 14:32:05  INFO      load.loader                     [LOAD] Vue matérialisée rafraîchie : reporting_mexora.mv_ca_mensuel
+2026-04-23 14:32:05  INFO      load.loader                     [LOAD] Vue matérialisée rafraîchie : reporting_mexora.mv_top_produits
+2026-04-23 14:32:06  INFO      load.loader                     [LOAD] Vue matérialisée rafraîchie : reporting_mexora.mv_performance_livreurs
+2026-04-23 14:32:06  INFO      main                            ======================================================================
+2026-04-23 14:32:06  INFO      main                              PIPELINE TERMINÉ EN 61 secondes
+2026-04-23 14:32:06  INFO      main                              Lignes dans fait_ventes : 49,567
+2026-04-23 14:32:06  INFO      main                            ======================================================================
