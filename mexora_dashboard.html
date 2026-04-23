@@ -1,0 +1,1569 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mexora Analytics — Business Intelligence Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@300;400;500&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:        #0a0c10;
+    --surface:   #10131a;
+    --surface2:  #161b26;
+    --border:    #1e2535;
+    --accent:    #e8b84b;
+    --accent2:   #4b8de8;
+    --accent3:   #4be8a8;
+    --danger:    #e84b4b;
+    --warn:      #e87c4b;
+    --text:      #e8eaf0;
+    --muted:     #6b7280;
+    --dim:       #374151;
+    --gold:      #e8b84b;
+    --silver:    #94a3b8;
+    --bronze:    #cd7c4b;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 300;
+    line-height: 1.6;
+    overflow-x: hidden;
+  }
+
+  /* ── NOISE TEXTURE OVERLAY ── */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 9999;
+    opacity: 0.4;
+  }
+
+  /* ── SCROLLBAR ── */
+  ::-webkit-scrollbar { width: 4px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--dim); }
+
+  /* ── NAV ── */
+  nav {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 2.5rem;
+    height: 60px;
+    background: rgba(10,12,16,0.85);
+    -webkit-backdrop-filter: blur(20px);
+    backdrop-filter: blur(20px);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .nav-brand {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    font-family: 'Syne', sans-serif;
+    font-weight: 800;
+    font-size: 1.1rem;
+    letter-spacing: -0.02em;
+    color: var(--text);
+    text-decoration: none;
+  }
+
+  .nav-brand .dot {
+    width: 8px; height: 8px;
+    background: var(--accent);
+    border-radius: 50%;
+    animation: pulse 2s ease-in-out infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.5; transform: scale(0.8); }
+  }
+
+  .nav-links {
+    display: flex;
+    gap: 0.25rem;
+    list-style: none;
+  }
+
+  .nav-links a {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.7rem;
+    color: var(--muted);
+    text-decoration: none;
+    padding: 0.35rem 0.75rem;
+    border-radius: 4px;
+    transition: all 0.2s;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+  }
+
+  .nav-links a:hover {
+    color: var(--text);
+    background: var(--border);
+  }
+
+  .nav-badge {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.65rem;
+    color: var(--accent);
+    border: 1px solid var(--accent);
+    padding: 0.2rem 0.6rem;
+    border-radius: 3px;
+    letter-spacing: 0.1em;
+    opacity: 0.8;
+  }
+
+  /* ── MAIN LAYOUT ── */
+  main { padding-top: 60px; }
+
+  /* ── HERO ── */
+  .hero {
+    position: relative;
+    padding: 5rem 2.5rem 4rem;
+    overflow: hidden;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .hero::before {
+    content: '';
+    position: absolute;
+    top: -100px; left: -100px;
+    width: 500px; height: 500px;
+    background: radial-gradient(circle, rgba(232,184,75,0.06) 0%, transparent 70%);
+    pointer-events: none;
+  }
+
+  .hero::after {
+    content: '';
+    position: absolute;
+    bottom: -50px; right: -50px;
+    width: 300px; height: 300px;
+    background: radial-gradient(circle, rgba(75,141,232,0.05) 0%, transparent 70%);
+    pointer-events: none;
+  }
+
+  .hero-eyebrow {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.7rem;
+    color: var(--accent);
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    margin-bottom: 1rem;
+  }
+
+  .hero h1 {
+    font-family: 'Syne', sans-serif;
+    font-weight: 800;
+    font-size: clamp(2.5rem, 5vw, 4.5rem);
+    line-height: 1.0;
+    letter-spacing: -0.03em;
+    margin-bottom: 1.5rem;
+    max-width: 700px;
+  }
+
+  .hero h1 span { color: var(--accent); }
+
+  .hero-sub {
+    color: var(--muted);
+    font-size: 0.95rem;
+    max-width: 500px;
+    margin-bottom: 2.5rem;
+    line-height: 1.7;
+  }
+
+  .hero-meta {
+    display: flex;
+    gap: 2rem;
+    flex-wrap: wrap;
+  }
+
+  .hero-meta-item {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.7rem;
+    color: var(--dim);
+    letter-spacing: 0.05em;
+  }
+
+  .hero-meta-item strong {
+    display: block;
+    color: var(--muted);
+    font-size: 0.8rem;
+    margin-bottom: 0.2rem;
+  }
+
+  /* ── SECTION ── */
+  section {
+    padding: 4rem 2.5rem;
+    border-bottom: 1px solid var(--border);
+    animation: fadeUp 0.6s ease both;
+  }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .section-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    margin-bottom: 2.5rem;
+    gap: 1rem;
+    flex-wrap: wrap;
+  }
+
+  .section-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.65rem;
+    color: var(--accent);
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    margin-bottom: 0.5rem;
+  }
+
+  .section-title {
+    font-family: 'Syne', sans-serif;
+    font-weight: 700;
+    font-size: 1.6rem;
+    letter-spacing: -0.02em;
+    line-height: 1.1;
+  }
+
+  .section-desc {
+    font-size: 0.85rem;
+    color: var(--muted);
+    max-width: 400px;
+    line-height: 1.6;
+    margin-top: 0.5rem;
+  }
+
+  /* ── KPI GRID ── */
+  .kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1px;
+    background: var(--border);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+    margin-bottom: 2rem;
+  }
+
+  .kpi-card {
+    background: var(--surface);
+    padding: 1.75rem 1.5rem;
+    position: relative;
+    overflow: hidden;
+    transition: background 0.2s;
+  }
+
+  .kpi-card:hover { background: var(--surface2); }
+
+  .kpi-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: var(--accent);
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform 0.3s ease;
+  }
+
+  .kpi-card:hover::before { transform: scaleX(1); }
+
+  .kpi-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.65rem;
+    color: var(--muted);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    margin-bottom: 0.75rem;
+  }
+
+  .kpi-value {
+    font-family: 'Syne', sans-serif;
+    font-weight: 800;
+    font-size: 2rem;
+    letter-spacing: -0.03em;
+    line-height: 1;
+    margin-bottom: 0.5rem;
+    color: var(--text);
+  }
+
+  .kpi-value.accent { color: var(--accent); }
+  .kpi-value.blue   { color: var(--accent2); }
+  .kpi-value.green  { color: var(--accent3); }
+
+  .kpi-sub {
+    font-size: 0.75rem;
+    color: var(--dim);
+    font-family: 'DM Mono', monospace;
+  }
+
+  .kpi-trend {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.65rem;
+    padding: 0.15rem 0.5rem;
+    border-radius: 3px;
+    margin-top: 0.5rem;
+  }
+
+  .kpi-trend.up   { color: var(--accent3); background: rgba(75,232,168,0.08); }
+  .kpi-trend.down { color: var(--danger);  background: rgba(232,75,75,0.08); }
+  .kpi-trend.warn { color: var(--warn);    background: rgba(232,124,75,0.08); }
+
+  /* ── CHART CONTAINERS ── */
+  .chart-grid {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 1.5rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .chart-grid-3 {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 1.5rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .chart-grid-equal {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+    margin-bottom: 1.5rem;
+  }
+
+  @media (max-width: 900px) {
+    .chart-grid, .chart-grid-3, .chart-grid-equal {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  .chart-box {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.5rem;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .chart-box-title {
+    font-family: 'Syne', sans-serif;
+    font-weight: 600;
+    font-size: 0.85rem;
+    margin-bottom: 0.35rem;
+    letter-spacing: -0.01em;
+  }
+
+  .chart-box-sub {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.65rem;
+    color: var(--muted);
+    letter-spacing: 0.05em;
+    margin-bottom: 1.25rem;
+  }
+
+  /* ── BAR CHARTS ── */
+  .bar-chart { display: flex; flex-direction: column; gap: 0.6rem; }
+
+  .bar-row {
+    display: grid;
+    grid-template-columns: 140px 1fr 60px;
+    align-items: center;
+    gap: 0.75rem;
+  }
+
+  .bar-label {
+    font-size: 0.72rem;
+    color: var(--muted);
+    text-align: right;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-family: 'DM Mono', monospace;
+  }
+
+  .bar-track {
+    height: 6px;
+    background: var(--border);
+    border-radius: 3px;
+    overflow: hidden;
+  }
+
+  .bar-fill {
+    height: 100%;
+    border-radius: 3px;
+    transform: scaleX(0);
+    transform-origin: left;
+    animation: barGrow 0.8s cubic-bezier(0.34,1.56,0.64,1) both;
+  }
+
+  @keyframes barGrow {
+    to { transform: scaleX(1); }
+  }
+
+  .bar-val {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.65rem;
+    color: var(--muted);
+    text-align: right;
+  }
+
+  /* ── LINE CHART (SVG) ── */
+  .line-chart-wrap { position: relative; width: 100%; }
+  .line-chart-wrap svg { width: 100%; overflow: visible; }
+
+  /* ── DONUT CHART ── */
+  .donut-wrap {
+    display: flex;
+    align-items: center;
+    gap: 2rem;
+    flex-wrap: wrap;
+  }
+
+  .donut-svg { flex-shrink: 0; }
+
+  .donut-legend { display: flex; flex-direction: column; gap: 0.75rem; flex: 1; }
+
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+  }
+
+  .legend-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  .legend-label {
+    font-size: 0.75rem;
+    color: var(--muted);
+    flex: 1;
+  }
+
+  .legend-val {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.7rem;
+    color: var(--text);
+  }
+
+  .legend-pct {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.65rem;
+    color: var(--dim);
+    margin-left: 0.25rem;
+  }
+
+  /* ── TRAFFIC LIGHT BARS ── */
+  .tl-bar-row {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 0.75rem 0;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .tl-bar-row:last-child { border-bottom: none; }
+
+  .tl-label {
+    font-size: 0.78rem;
+    color: var(--text);
+    width: 120px;
+    flex-shrink: 0;
+  }
+
+  .tl-track {
+    flex: 1;
+    height: 8px;
+    background: var(--border);
+    border-radius: 4px;
+    overflow: hidden;
+  }
+
+  .tl-fill {
+    height: 100%;
+    border-radius: 4px;
+    transform: scaleX(0);
+    transform-origin: left;
+    animation: barGrow 1s cubic-bezier(0.34,1.56,0.64,1) 0.3s both;
+  }
+
+  .tl-val {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.72rem;
+    width: 50px;
+    text-align: right;
+  }
+
+  .tl-badge {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.6rem;
+    padding: 0.15rem 0.5rem;
+    border-radius: 3px;
+    letter-spacing: 0.05em;
+    width: 60px;
+    text-align: center;
+  }
+
+  .badge-red    { background: rgba(232,75,75,0.12);  color: var(--danger); border: 1px solid rgba(232,75,75,0.2); }
+  .badge-orange { background: rgba(232,124,75,0.12); color: var(--warn);   border: 1px solid rgba(232,124,75,0.2); }
+  .badge-green  { background: rgba(75,232,168,0.12); color: var(--accent3);border: 1px solid rgba(75,232,168,0.2); }
+
+  /* ── SEGMENT CARDS ── */
+  .segment-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+  }
+
+  @media (max-width: 600px) { .segment-grid { grid-template-columns: 1fr; } }
+
+  .seg-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.5rem;
+    position: relative;
+    overflow: hidden;
+    transition: transform 0.2s, border-color 0.2s;
+  }
+
+  .seg-card:hover { transform: translateY(-2px); }
+
+  .seg-card.gold   { border-color: rgba(232,184,75,0.3); }
+  .seg-card.silver { border-color: rgba(148,163,184,0.3); }
+  .seg-card.bronze { border-color: rgba(205,124,75,0.3); }
+
+  .seg-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+  }
+
+  .seg-card.gold::before   { background: linear-gradient(90deg, var(--gold), transparent); }
+  .seg-card.silver::before { background: linear-gradient(90deg, var(--silver), transparent); }
+  .seg-card.bronze::before { background: linear-gradient(90deg, var(--bronze), transparent); }
+
+  .seg-tier {
+    font-family: 'Syne', sans-serif;
+    font-weight: 800;
+    font-size: 0.8rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-bottom: 0.75rem;
+  }
+
+  .seg-tier.gold   { color: var(--gold); }
+  .seg-tier.silver { color: var(--silver); }
+  .seg-tier.bronze { color: var(--bronze); }
+
+  .seg-amount {
+    font-family: 'Syne', sans-serif;
+    font-weight: 800;
+    font-size: 1.8rem;
+    letter-spacing: -0.03em;
+    line-height: 1;
+    margin-bottom: 0.5rem;
+  }
+
+  .seg-meta {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+    margin-top: 0.75rem;
+  }
+
+  .seg-meta-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.35rem 0;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .seg-meta-row:last-child { border-bottom: none; }
+
+  .seg-meta-key {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.62rem;
+    color: var(--dim);
+    letter-spacing: 0.05em;
+  }
+
+  .seg-meta-val {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.72rem;
+    color: var(--muted);
+  }
+
+  /* ── TABLE ── */
+  .data-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.78rem;
+  }
+
+  .data-table th {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.62rem;
+    color: var(--muted);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    text-align: left;
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid var(--border);
+    white-space: nowrap;
+  }
+
+  .data-table td {
+    padding: 0.65rem 1rem;
+    border-bottom: 1px solid rgba(30,37,53,0.5);
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+    font-size: 0.72rem;
+  }
+
+  .data-table tr:hover td { background: var(--surface2); }
+  .data-table tr:last-child td { border-bottom: none; }
+
+  /* ── RAMADAN TIMELINE ── */
+  .ramadan-timeline {
+    position: relative;
+    height: 120px;
+    margin-bottom: 1rem;
+  }
+
+  .timeline-track {
+    position: absolute;
+    bottom: 20px; left: 0; right: 0;
+    height: 4px;
+    background: var(--border);
+    border-radius: 2px;
+  }
+
+  .timeline-period {
+    position: absolute;
+    bottom: 14px;
+    height: 16px;
+    border-radius: 8px;
+    background: rgba(232,184,75,0.25);
+    border: 1px solid rgba(232,184,75,0.4);
+  }
+
+  .timeline-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.55rem;
+    color: var(--accent);
+    position: absolute;
+    bottom: 36px;
+    transform: translateX(-50%);
+    white-space: nowrap;
+    letter-spacing: 0.05em;
+  }
+
+  .month-tick {
+    position: absolute;
+    bottom: 8px;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.55rem;
+    color: var(--dim);
+    transform: translateX(-50%);
+  }
+
+  /* ── INSIGHT CARDS ── */
+  .insight-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1rem;
+  }
+
+  .insight-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.5rem;
+    position: relative;
+    transition: border-color 0.2s, transform 0.2s;
+  }
+
+  .insight-card:hover {
+    border-color: var(--dim);
+    transform: translateY(-2px);
+  }
+
+  .insight-num {
+    font-family: 'Syne', sans-serif;
+    font-size: 3rem;
+    font-weight: 800;
+    color: var(--border);
+    line-height: 1;
+    margin-bottom: 0.5rem;
+    letter-spacing: -0.05em;
+  }
+
+  .insight-title {
+    font-family: 'Syne', sans-serif;
+    font-weight: 700;
+    font-size: 0.9rem;
+    margin-bottom: 0.5rem;
+    letter-spacing: -0.01em;
+  }
+
+  .insight-body {
+    font-size: 0.8rem;
+    color: var(--muted);
+    line-height: 1.6;
+  }
+
+  .insight-highlight {
+    color: var(--accent);
+    font-weight: 500;
+  }
+
+  /* ── FOOTER ── */
+  footer {
+    padding: 2rem 2.5rem;
+    border-top: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 1rem;
+  }
+
+  .footer-brand {
+    font-family: 'Syne', sans-serif;
+    font-weight: 700;
+    font-size: 0.85rem;
+    color: var(--muted);
+    letter-spacing: -0.01em;
+  }
+
+  .footer-meta {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.65rem;
+    color: var(--dim);
+    letter-spacing: 0.05em;
+  }
+
+  /* ── DIVIDER ── */
+  .divider {
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--border), transparent);
+    margin: 1.5rem 0;
+  }
+
+  /* ── SCROLL ANIMATION ── */
+  .reveal {
+    opacity: 0;
+    transform: translateY(24px);
+    transition: opacity 0.5s ease, transform 0.5s ease;
+  }
+
+  .reveal.visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <a href="#" class="nav-brand">
+    <span class="dot"></span>
+    Mexora Analytics
+  </a>
+  <ul class="nav-links">
+    <li><a href="#tendances">CA</a></li>
+    <li><a href="#produits">Produits</a></li>
+    <li><a href="#segments">Segments</a></li>
+    <li><a href="#retours">Retours</a></li>
+    <li><a href="#ramadan">Ramadan</a></li>
+    <li><a href="#insights">Insights</a></li>
+  </ul>
+  <span class="nav-badge">LIVE DATA</span>
+</nav>
+
+<main>
+
+<!-- HERO -->
+<div class="hero">
+  <p class="hero-eyebrow">Business Intelligence Dashboard</p>
+  <h1>Mexora<br><span>Analytics</span></h1>
+  <p class="hero-sub">Tableau de bord décisionnel complet pour Mexora, marketplace e-commerce basée à Tanger. Données 2022–2024 — 49 567 commandes analysées.</p>
+  <div class="hero-meta">
+    <div class="hero-meta-item"><strong>CA Total</strong>384.20M MAD</div>
+    <div class="hero-meta-item"><strong>Commandes</strong>49 567</div>
+    <div class="hero-meta-item"><strong>Clients</strong>2 868</div>
+    <div class="hero-meta-item"><strong>Produits</strong>50</div>
+    <div class="hero-meta-item"><strong>Villes</strong>25</div>
+    <div class="hero-meta-item"><strong>Pipeline</strong>Python ETL + PostgreSQL</div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════
+     PAGE 1 — TENDANCES CA
+════════════════════════════════════════════════ -->
+<section id="tendances" class="reveal">
+  <div class="section-header">
+    <div>
+      <p class="section-label">Page 01 — Question Métier</p>
+      <h2 class="section-title">Tendances du<br>Chiffre d'Affaires</h2>
+      <p class="section-desc">Quelle région génère le plus de CA ? Évolution mensuelle sur 12 mois avec comparaison annuelle.</p>
+    </div>
+  </div>
+
+  <!-- KPIs -->
+  <div class="kpi-grid" style="margin-bottom:2rem">
+    <div class="kpi-card">
+      <p class="kpi-label">CA Livré Total</p>
+      <p class="kpi-value accent">384.20M</p>
+      <p class="kpi-sub">MAD — Toutes années</p>
+      <span class="kpi-trend up">↑ Commandes livrées uniquement</span>
+    </div>
+    <div class="kpi-card">
+      <p class="kpi-label">Panier Moyen</p>
+      <p class="kpi-value">10.78K</p>
+      <p class="kpi-sub">MAD par commande</p>
+      <span class="kpi-trend up">↑ Gold: 11 435 MAD</span>
+    </div>
+    <div class="kpi-card">
+      <p class="kpi-label">Nb Commandes</p>
+      <p class="kpi-value blue">49 567</p>
+      <p class="kpi-sub">Après nettoyage ETL</p>
+      <span class="kpi-trend warn">1 933 supprimées (doublons + test)</span>
+    </div>
+    <div class="kpi-card">
+      <p class="kpi-label">Région Leader</p>
+      <p class="kpi-value" style="font-size:1.2rem;color:var(--accent3)">Rabat-Salé-Kénitra</p>
+      <p class="kpi-sub">CA le plus élevé</p>
+      <span class="kpi-trend up">↑ Surpasse Fès-Meknès</span>
+    </div>
+  </div>
+
+  <div class="chart-grid">
+    <!-- Line Chart -->
+    <div class="chart-box">
+      <p class="chart-box-title">CA Mensuel par Année</p>
+      <p class="chart-box-sub">SUM(montant_ttc) — MV_CA_MENSUEL</p>
+      <div class="line-chart-wrap">
+        <svg viewBox="0 0 560 200" height="200">
+          <defs>
+            <linearGradient id="g22" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="#4b8de8" stop-opacity="0.15"/>
+              <stop offset="100%" stop-color="#4b8de8" stop-opacity="0"/>
+            </linearGradient>
+            <linearGradient id="g23" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="#e8b84b" stop-opacity="0.15"/>
+              <stop offset="100%" stop-color="#e8b84b" stop-opacity="0"/>
+            </linearGradient>
+            <linearGradient id="g24" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="#4be8a8" stop-opacity="0.15"/>
+              <stop offset="100%" stop-color="#4be8a8" stop-opacity="0"/>
+            </linearGradient>
+          </defs>
+          <!-- Grid lines -->
+          <line x1="0" y1="40" x2="560" y2="40" stroke="#1e2535" stroke-width="1"/>
+          <line x1="0" y1="80" x2="560" y2="80" stroke="#1e2535" stroke-width="1"/>
+          <line x1="0" y1="120" x2="560" y2="120" stroke="#1e2535" stroke-width="1"/>
+          <line x1="0" y1="160" x2="560" y2="160" stroke="#1e2535" stroke-width="1"/>
+
+          <!-- 2022 area+line -->
+          <path d="M0,95 L46,88 L92,105 L138,60 L184,78 L230,92 L276,85 L322,100 L368,70 L414,88 L460,95 L506,82 L552,90" fill="none" stroke="#4b8de8" stroke-width="2" stroke-linejoin="round"/>
+
+          <!-- 2023 area+line -->
+          <path d="M0,88 L46,75 L92,95 L138,55 L184,70 L230,85 L276,78 L322,92 L368,65 L414,80 L460,88 L506,75 L552,83" fill="none" stroke="#e8b84b" stroke-width="2" stroke-linejoin="round"/>
+
+          <!-- 2024 area+line -->
+          <path d="M0,82 L46,70 L92,88 L138,50 L184,65 L230,78 L276,72 L322,85 L368,58 L414,74 L460,82 L506,69 L552,77" fill="none" stroke="#4be8a8" stroke-width="2" stroke-linejoin="round"/>
+
+          <!-- Month labels -->
+          <text x="0"   y="195" font-size="8" fill="#374151" font-family="monospace">Jan</text>
+          <text x="90"  y="195" font-size="8" fill="#374151" font-family="monospace">Mar</text>
+          <text x="180" y="195" font-size="8" fill="#374151" font-family="monospace">Mai</text>
+          <text x="270" y="195" font-size="8" fill="#374151" font-family="monospace">Jul</text>
+          <text x="360" y="195" font-size="8" fill="#374151" font-family="monospace">Sep</text>
+          <text x="450" y="195" font-size="8" fill="#374151" font-family="monospace">Nov</text>
+
+          <!-- Legend -->
+          <circle cx="10" cy="12" r="4" fill="#4b8de8"/>
+          <text x="18" y="16" font-size="9" fill="#6b7280" font-family="monospace">2022</text>
+          <circle cx="65" cy="12" r="4" fill="#e8b84b"/>
+          <text x="73" y="16" font-size="9" fill="#6b7280" font-family="monospace">2023</text>
+          <circle cx="120" cy="12" r="4" fill="#4be8a8"/>
+          <text x="128" y="16" font-size="9" fill="#6b7280" font-family="monospace">2024</text>
+        </svg>
+      </div>
+    </div>
+
+    <!-- Region bar chart -->
+    <div class="chart-box">
+      <p class="chart-box-title">CA Livré par Région</p>
+      <p class="chart-box-sub">CALCULATE — statut = 'livré'</p>
+      <div class="bar-chart" style="margin-top:0.5rem">
+        <div class="bar-row">
+          <span class="bar-label">Rabat-Salé-Kén.</span>
+          <div class="bar-track"><div class="bar-fill" style="width:100%;background:#e8b84b;animation-delay:0.1s"></div></div>
+          <span class="bar-val" style="color:var(--accent)">~90M</span>
+        </div>
+        <div class="bar-row">
+          <span class="bar-label">Fès-Meknès</span>
+          <div class="bar-track"><div class="bar-fill" style="width:80%;background:#4b8de8;animation-delay:0.2s"></div></div>
+          <span class="bar-val">~72M</span>
+        </div>
+        <div class="bar-row">
+          <span class="bar-label">Oriental</span>
+          <div class="bar-track"><div class="bar-fill" style="width:72%;background:#4b8de8;animation-delay:0.3s"></div></div>
+          <span class="bar-val">~65M</span>
+        </div>
+        <div class="bar-row">
+          <span class="bar-label">Tanger-Tétouan</span>
+          <div class="bar-track"><div class="bar-fill" style="width:65%;background:#4b8de8;animation-delay:0.4s"></div></div>
+          <span class="bar-val">~59M</span>
+        </div>
+        <div class="bar-row">
+          <span class="bar-label">Casablanca-Set.</span>
+          <div class="bar-track"><div class="bar-fill" style="width:55%;background:#4b8de8;animation-delay:0.5s"></div></div>
+          <span class="bar-val">~50M</span>
+        </div>
+        <div class="bar-row">
+          <span class="bar-label">Souss-Massa</span>
+          <div class="bar-track"><div class="bar-fill" style="width:42%;background:#4b8de8;animation-delay:0.6s"></div></div>
+          <span class="bar-val">~38M</span>
+        </div>
+        <div class="bar-row">
+          <span class="bar-label">Marrakech-Safi</span>
+          <div class="bar-track"><div class="bar-fill" style="width:30%;background:#4b8de8;animation-delay:0.7s"></div></div>
+          <span class="bar-val">~27M</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════
+     PAGE 2 — TOP PRODUITS
+════════════════════════════════════════════════ -->
+<section id="produits" class="reveal">
+  <div class="section-header">
+    <div>
+      <p class="section-label">Page 02 — Question Métier</p>
+      <h2 class="section-title">Top 10 Produits<br>par Trimestre — Tanger</h2>
+      <p class="section-desc">Quels sont les 10 meilleurs produits par trimestre à Tanger ? Filtrés par ville et classés par CA.</p>
+    </div>
+    <div style="display:flex;gap:0.5rem;flex-wrap:wrap">
+      <span style="font-family:'DM Mono',monospace;font-size:0.65rem;color:var(--muted);border:1px solid var(--border);padding:0.3rem 0.75rem;border-radius:4px">CA Période: 29.96M MAD</span>
+      <span style="font-family:'DM Mono',monospace;font-size:0.65rem;color:var(--muted);border:1px solid var(--border);padding:0.3rem 0.75rem;border-radius:4px">Clients distincts: 2991</span>
+    </div>
+  </div>
+
+  <div class="chart-box">
+    <p class="chart-box-title">Top 10 — CA par Produit (Tanger, Toutes Années)</p>
+    <p class="chart-box-sub">MV_TOP_PRODUITS — ville = 'Tanger' — Top N filter = 10</p>
+    <div class="bar-chart" style="margin-top:1rem">
+      <div class="bar-row" style="grid-template-columns:180px 1fr 70px">
+        <span class="bar-label">LG OLED 65"</span>
+        <div class="bar-track"><div class="bar-fill" style="width:100%;background:linear-gradient(90deg,#4b8de8,#4be8a8);animation-delay:0.05s"></div></div>
+        <span class="bar-val" style="color:var(--accent2)">0.40M</span>
+      </div>
+      <div class="bar-row" style="grid-template-columns:180px 1fr 70px">
+        <span class="bar-label">MacBook Air M3</span>
+        <div class="bar-track"><div class="bar-fill" style="width:88%;background:#4b8de8;animation-delay:0.1s"></div></div>
+        <span class="bar-val">0.35M</span>
+      </div>
+      <div class="bar-row" style="grid-template-columns:180px 1fr 70px">
+        <span class="bar-label">Samsung Galaxy S24</span>
+        <div class="bar-track"><div class="bar-fill" style="width:80%;background:#4b8de8;animation-delay:0.15s"></div></div>
+        <span class="bar-val">0.32M</span>
+      </div>
+      <div class="bar-row" style="grid-template-columns:180px 1fr 70px">
+        <span class="bar-label">iPhone 16 Pro 256Go</span>
+        <div class="bar-track"><div class="bar-fill" style="width:73%;background:#4b8de8;animation-delay:0.2s"></div></div>
+        <span class="bar-val">0.29M</span>
+      </div>
+      <div class="bar-row" style="grid-template-columns:180px 1fr 70px">
+        <span class="bar-label">iPhone 14</span>
+        <div class="bar-track"><div class="bar-fill" style="width:66%;background:#4b8de8;animation-delay:0.25s"></div></div>
+        <span class="bar-val">0.26M</span>
+      </div>
+      <div class="bar-row" style="grid-template-columns:180px 1fr 70px">
+        <span class="bar-label">Lenovo ThinkPad E14</span>
+        <div class="bar-track"><div class="bar-fill" style="width:54%;background:#4b8de8;animation-delay:0.3s"></div></div>
+        <span class="bar-val">0.22M</span>
+      </div>
+      <div class="bar-row" style="grid-template-columns:180px 1fr 70px">
+        <span class="bar-label">HP Pavilion 15</span>
+        <div class="bar-track"><div class="bar-fill" style="width:48%;background:#4b8de8;animation-delay:0.35s"></div></div>
+        <span class="bar-val">0.19M</span>
+      </div>
+      <div class="bar-row" style="grid-template-columns:180px 1fr 70px">
+        <span class="bar-label">Xiaomi 14 Pro</span>
+        <div class="bar-track"><div class="bar-fill" style="width:40%;background:#4b8de8;animation-delay:0.4s"></div></div>
+        <span class="bar-val">0.16M</span>
+      </div>
+      <div class="bar-row" style="grid-template-columns:180px 1fr 70px">
+        <span class="bar-label">Caftan Mariage Brodé</span>
+        <div class="bar-track"><div class="bar-fill" style="width:28%;background:#cd7c4b;animation-delay:0.45s"></div></div>
+        <span class="bar-val" style="color:var(--bronze)">0.11M</span>
+      </div>
+      <div class="bar-row" style="grid-template-columns:180px 1fr 70px">
+        <span class="bar-label">Samsung QLED 55"</span>
+        <div class="bar-track"><div class="bar-fill" style="width:22%;background:#4b8de8;animation-delay:0.5s"></div></div>
+        <span class="bar-val">0.09M</span>
+      </div>
+    </div>
+    <div style="display:flex;gap:1.5rem;margin-top:1.25rem;padding-top:1rem;border-top:1px solid var(--border)">
+      <div style="display:flex;align-items:center;gap:0.5rem"><span style="width:10px;height:10px;background:#4b8de8;border-radius:2px;display:inline-block"></span><span style="font-family:'DM Mono',monospace;font-size:0.65rem;color:var(--muted)">Electronique</span></div>
+      <div style="display:flex;align-items:center;gap:0.5rem"><span style="width:10px;height:10px;background:#cd7c4b;border-radius:2px;display:inline-block"></span><span style="font-family:'DM Mono',monospace;font-size:0.65rem;color:var(--muted)">Mode</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════
+     PAGE 3 — SEGMENTS CLIENTS
+════════════════════════════════════════════════ -->
+<section id="segments" class="reveal">
+  <div class="section-header">
+    <div>
+      <p class="section-label">Page 03 — Question Métier</p>
+      <h2 class="section-title">Analyse par<br>Segment Client</h2>
+      <p class="section-desc">Quel segment génère le panier moyen le plus élevé ? Distribution du CA par segment Gold / Silver / Bronze.</p>
+    </div>
+  </div>
+
+  <div class="segment-grid">
+    <div class="seg-card gold">
+      <p class="seg-tier gold">⬡ Gold</p>
+      <p class="seg-amount" style="color:var(--gold)">287.22M</p>
+      <p style="font-family:'DM Mono',monospace;font-size:0.65rem;color:var(--dim);margin-top:0.25rem">74.76% du CA total</p>
+      <div class="seg-meta">
+        <div class="seg-meta-row">
+          <span class="seg-meta-key">COMMANDES</span>
+          <span class="seg-meta-val">33 743</span>
+        </div>
+        <div class="seg-meta-row">
+          <span class="seg-meta-key">PANIER MOYEN</span>
+          <span class="seg-meta-val" style="color:var(--gold)">11 435 MAD</span>
+        </div>
+        <div class="seg-meta-row">
+          <span class="seg-meta-key">SEUIL</span>
+          <span class="seg-meta-val">≥ 15 000 MAD / 12 mois</span>
+        </div>
+      </div>
+    </div>
+    <div class="seg-card silver">
+      <p class="seg-tier silver">◈ Silver</p>
+      <p class="seg-amount" style="color:var(--silver)">40.25M</p>
+      <p style="font-family:'DM Mono',monospace;font-size:0.65rem;color:var(--dim);margin-top:0.25rem">10.48% du CA total</p>
+      <div class="seg-meta">
+        <div class="seg-meta-row">
+          <span class="seg-meta-key">COMMANDES</span>
+          <span class="seg-meta-val">6 750</span>
+        </div>
+        <div class="seg-meta-row">
+          <span class="seg-meta-key">PANIER MOYEN</span>
+          <span class="seg-meta-val" style="color:var(--silver)">9 033 MAD</span>
+        </div>
+        <div class="seg-meta-row">
+          <span class="seg-meta-key">SEUIL</span>
+          <span class="seg-meta-val">≥ 5 000 MAD / 12 mois</span>
+        </div>
+      </div>
+    </div>
+    <div class="seg-card bronze">
+      <p class="seg-tier bronze">◇ Bronze</p>
+      <p class="seg-amount" style="color:var(--bronze)">56.72M</p>
+      <p style="font-family:'DM Mono',monospace;font-size:0.65rem;color:var(--dim);margin-top:0.25rem">14.76% du CA total</p>
+      <div class="seg-meta">
+        <div class="seg-meta-row">
+          <span class="seg-meta-key">COMMANDES</span>
+          <span class="seg-meta-val">9 074</span>
+        </div>
+        <div class="seg-meta-row">
+          <span class="seg-meta-key">PANIER MOYEN</span>
+          <span class="seg-meta-val" style="color:var(--bronze)">9 660 MAD</span>
+        </div>
+        <div class="seg-meta-row">
+          <span class="seg-meta-key">SEUIL</span>
+          <span class="seg-meta-val">&lt; 5 000 MAD / 12 mois</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="chart-grid-equal">
+    <!-- Donut -->
+    <div class="chart-box">
+      <p class="chart-box-title">Distribution CA par Segment</p>
+      <p class="chart-box-sub">CALCULATE([CA Livré]) par segment_client</p>
+      <div class="donut-wrap" style="margin-top:1rem">
+        <svg class="donut-svg" width="140" height="140" viewBox="0 0 140 140">
+          <!-- Bronze 14.76% -->
+          <circle cx="70" cy="70" r="50" fill="none" stroke="#1e2535" stroke-width="22"/>
+          <!-- Gold 74.76% = 235.5deg out of 315.2deg usable -->
+          <circle cx="70" cy="70" r="50" fill="none" stroke="#e8b84b" stroke-width="22"
+            stroke-dasharray="235 79" stroke-dashoffset="0"
+            transform="rotate(-90 70 70)" style="animation:donutFill 1.2s ease both"/>
+          <!-- Silver 10.48% -->
+          <circle cx="70" cy="70" r="50" fill="none" stroke="#94a3b8" stroke-width="22"
+            stroke-dasharray="33 281" stroke-dashoffset="-235"
+            transform="rotate(-90 70 70)" style="animation:donutFill 1.2s ease 0.2s both"/>
+          <!-- Bronze 14.76% -->
+          <circle cx="70" cy="70" r="50" fill="none" stroke="#cd7c4b" stroke-width="22"
+            stroke-dasharray="46 268" stroke-dashoffset="-268"
+            transform="rotate(-90 70 70)" style="animation:donutFill 1.2s ease 0.4s both"/>
+          <text x="70" y="65" text-anchor="middle" font-family="Syne,sans-serif" font-weight="800" font-size="14" fill="#e8eaf0">74.76%</text>
+          <text x="70" y="80" text-anchor="middle" font-family="monospace" font-size="8" fill="#6b7280">Gold</text>
+        </svg>
+        <div class="donut-legend">
+          <div class="legend-item">
+            <span class="legend-dot" style="background:var(--gold)"></span>
+            <span class="legend-label">Gold</span>
+            <span class="legend-val">287.22M</span>
+            <span class="legend-pct">74.76%</span>
+          </div>
+          <div class="legend-item">
+            <span class="legend-dot" style="background:var(--bronze)"></span>
+            <span class="legend-label">Bronze</span>
+            <span class="legend-val">56.72M</span>
+            <span class="legend-pct">14.76%</span>
+          </div>
+          <div class="legend-item">
+            <span class="legend-dot" style="background:var(--silver)"></span>
+            <span class="legend-label">Silver</span>
+            <span class="legend-val">40.25M</span>
+            <span class="legend-pct">10.48%</span>
+          </div>
+          <div class="legend-item" style="padding-top:0.5rem;border-top:1px solid var(--border)">
+            <span class="legend-dot" style="background:var(--dim)"></span>
+            <span class="legend-label">Total</span>
+            <span class="legend-val">384.20M</span>
+            <span class="legend-pct">100%</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Canal acquisition -->
+    <div class="chart-box">
+      <p class="chart-box-title">Commandes par Canal d'Acquisition</p>
+      <p class="chart-box-sub">FAIT_VENTES × DIM_CLIENT — segmenté</p>
+      <div class="bar-chart" style="margin-top:1rem">
+        <div class="bar-row" style="grid-template-columns:120px 1fr 50px">
+          <span class="bar-label">application_mobile</span>
+          <div class="bar-track"><div class="bar-fill" style="width:100%;background:var(--gold);animation-delay:0.1s"></div></div>
+          <span class="bar-val">4.8K</span>
+        </div>
+        <div class="bar-row" style="grid-template-columns:120px 1fr 50px">
+          <span class="bar-label">google_ads</span>
+          <div class="bar-track"><div class="bar-fill" style="width:92%;background:var(--gold);animation-delay:0.15s"></div></div>
+          <span class="bar-val">4.4K</span>
+        </div>
+        <div class="bar-row" style="grid-template-columns:120px 1fr 50px">
+          <span class="bar-label">email_marketing</span>
+          <div class="bar-track"><div class="bar-fill" style="width:84%;background:var(--gold);animation-delay:0.2s"></div></div>
+          <span class="bar-val">4.0K</span>
+        </div>
+        <div class="bar-row" style="grid-template-columns:120px 1fr 50px">
+          <span class="bar-label">influenceur</span>
+          <div class="bar-track"><div class="bar-fill" style="width:76%;background:var(--gold);animation-delay:0.25s"></div></div>
+          <span class="bar-val">3.6K</span>
+        </div>
+        <div class="bar-row" style="grid-template-columns:120px 1fr 50px">
+          <span class="bar-label">facebook</span>
+          <div class="bar-track"><div class="bar-fill" style="width:68%;background:var(--accent2);animation-delay:0.3s"></div></div>
+          <span class="bar-val">3.3K</span>
+        </div>
+        <div class="bar-row" style="grid-template-columns:120px 1fr 50px">
+          <span class="bar-label">instagram</span>
+          <div class="bar-track"><div class="bar-fill" style="width:60%;background:var(--accent2);animation-delay:0.35s"></div></div>
+          <span class="bar-val">2.9K</span>
+        </div>
+        <div class="bar-row" style="grid-template-columns:120px 1fr 50px">
+          <span class="bar-label">partenaire</span>
+          <div class="bar-track"><div class="bar-fill" style="width:50%;background:var(--accent2);animation-delay:0.4s"></div></div>
+          <span class="bar-val">2.4K</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════
+     PAGE 4 — TAUX DE RETOUR
+════════════════════════════════════════════════ -->
+<section id="retours" class="reveal">
+  <div class="section-header">
+    <div>
+      <p class="section-label">Page 04 — Question Métier</p>
+      <h2 class="section-title">Taux de Retour<br>par Catégorie</h2>
+      <p class="section-desc">Quelles catégories sont problématiques ? Système de feux tricolores — seuil d'alerte à 5%.</p>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:0.4rem;align-items:flex-end">
+      <span class="badge-red kpi-trend" style="font-size:0.68rem;padding:0.3rem 0.75rem"> > 5% — Alerte Rouge</span>
+      <span class="badge-orange kpi-trend" style="font-size:0.68rem;padding:0.3rem 0.75rem">3–5% — Surveillance</span>
+      <span class="badge-green kpi-trend" style="font-size:0.68rem;padding:0.3rem 0.75rem"> < 3% — Correct</span>
+    </div>
+  </div>
+
+  <div class="kpi-grid" style="margin-bottom:2rem">
+    <div class="kpi-card">
+      <p class="kpi-label">Retours Total</p>
+      <p class="kpi-value" style="color:var(--danger)">2 971</p>
+      <p class="kpi-sub">Commandes retournées</p>
+    </div>
+    <div class="kpi-card">
+      <p class="kpi-label">Commandes Total</p>
+      <p class="kpi-value">49 567</p>
+      <p class="kpi-sub">Après nettoyage ETL</p>
+    </div>
+    <div class="kpi-card">
+      <p class="kpi-label">Taux Retour Global</p>
+      <p class="kpi-value" style="color:var(--danger)">5.99%</p>
+      <p class="kpi-sub">Toutes catégories</p>
+      <span class="kpi-trend down">↑ Au-dessus du seuil 5%</span>
+    </div>
+    <div class="kpi-card">
+      <p class="kpi-label">Produit + Retourné</p>
+      <p class="kpi-value" style="font-size:0.95rem;color:var(--danger)">Câble USB-C Braided</p>
+      <p class="kpi-sub">7.51% — Electronique</p>
+      <span class="kpi-trend down">↓ Révision qualité requise</span>
+    </div>
+  </div>
+
+  <div class="chart-grid">
+    <div class="chart-box">
+      <p class="chart-box-title">Taux de Retour par Catégorie — Feux Tricolores</p>
+      <p class="chart-box-sub">COUNTROWS FILTER statut_commande = 'retourné' / COUNTROWS total × 100</p>
+      <div style="margin-top:1.25rem">
+        <div class="tl-bar-row">
+          <span class="tl-label">Electronique</span>
+          <div class="tl-track"><div class="tl-fill" style="width:100%;background:var(--danger)"></div></div>
+          <span class="tl-val" style="color:var(--danger)">6.2%</span>
+          <span class="tl-badge badge-red">ALERTE</span>
+        </div>
+        <div class="tl-bar-row">
+          <span class="tl-label">Mode</span>
+          <div class="tl-track"><div class="tl-fill" style="width:68%;background:var(--warn)"></div></div>
+          <span class="tl-val" style="color:var(--warn)">4.1%</span>
+          <span class="tl-badge badge-orange">SURVEILL.</span>
+        </div>
+        <div class="tl-bar-row">
+          <span class="tl-label">Alimentation</span>
+          <div class="tl-track"><div class="tl-fill" style="width:40%;background:var(--accent3)"></div></div>
+          <span class="tl-val" style="color:var(--accent3)">2.4%</span>
+          <span class="tl-badge badge-green">OK</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="chart-box" style="overflow-y:auto;max-height:320px">
+      <p class="chart-box-title">Top Produits Retournés</p>
+      <p class="chart-box-sub">Tri par taux décroissant</p>
+      <table class="data-table" style="margin-top:0.75rem">
+        <thead>
+          <tr>
+            <th>Produit</th>
+            <th>Taux %</th>
+            <th>Retours</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td>Câble USB-C Braided 2m</td><td style="color:var(--danger)">7.51</td><td>67</td></tr>
+          <tr><td>AirPods Pro 2</td><td style="color:var(--danger)">6.68</td><td>65</td></tr>
+          <tr><td>Harira Concentrée 6pc</td><td style="color:var(--danger)">6.05</td><td>63</td></tr>
+          <tr><td>Bougie Arom. Ramadan</td><td style="color:var(--danger)">6.24</td><td>71</td></tr>
+          <tr><td>Chebakia Ramadan 1kg</td><td style="color:var(--danger)">6.24</td><td>71</td></tr>
+          <tr><td>Safran Pur Taliouine</td><td style="color:var(--danger)">5.95</td><td>66</td></tr>
+          <tr><td>Couscous Dur 5kg</td><td style="color:var(--danger)">5.87</td><td>65</td></tr>
+          <tr><td>Chargeur Rapide 65W</td><td style="color:var(--danger)">5.92</td><td>58</td></tr>
+          <tr><td>Sellou Tradition 500g</td><td style="color:var(--warn)">5.93</td><td>67</td></tr>
+          <tr><td>Argan Alimentaire</td><td style="color:var(--warn)">5.79</td><td>65</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════
+     PAGE 5 — EFFET RAMADAN
+════════════════════════════════════════════════ -->
+<section id="ramadan" class="reveal">
+  <div class="section-header">
+    <div>
+      <p class="section-label">Page 05 — Question Métier</p>
+      <h2 class="section-title">Effet Ramadan<br>sur les Ventes</h2>
+      <p class="section-desc">Y a-t-il un effet Ramadan visible sur les ventes alimentaires ? Comparaison période Ramadan vs hors Ramadan.</p>
+    </div>
+  </div>
+
+  <div class="kpi-grid" style="margin-bottom:2rem">
+    <div class="kpi-card">
+      <p class="kpi-label">CA Période Ramadan</p>
+      <p class="kpi-value accent">18.28M</p>
+      <p class="kpi-sub">MAD — 3 années cumulées</p>
+      <span class="kpi-trend warn">Périodes: Mar-Avr 2022/23/24</span>
+    </div>
+    <div class="kpi-card">
+      <p class="kpi-label">CA Hors Ramadan</p>
+      <p class="kpi-value">365.92M</p>
+      <p class="kpi-sub">MAD — reste de l'année</p>
+    </div>
+    <div class="kpi-card">
+      <p class="kpi-label">% CA en Ramadan</p>
+      <p class="kpi-value blue">3.42%</p>
+      <p class="kpi-sub">du CA annuel total</p>
+      <span class="kpi-trend warn">Effet modéré — opportunité</span>
+    </div>
+    <div class="kpi-card">
+      <p class="kpi-label">Alimentation — Ramadan</p>
+      <p class="kpi-value" style="font-size:1.1rem;color:var(--accent3)">Chebakia, Sellou</p>
+      <p class="kpi-sub">Produits les + vendus</p>
+      <span class="kpi-trend up">↑ Pic en mars–avril</span>
+    </div>
+  </div>
+
+  <!-- Ramadan Timeline -->
+  <div class="chart-box" style="margin-bottom:1.5rem">
+    <p class="chart-box-title">Calendrier Ramadan 2022–2024</p>
+    <p class="chart-box-sub">DIM_TEMPS.periode_ramadan — périodes identifiées dans le pipeline ETL</p>
+    <div style="margin-top:1.5rem;position:relative;height:100px">
+      <!-- 2022 bar -->
+      <div style="position:absolute;top:0;left:0;right:0">
+        <p style="font-family:'DM Mono',monospace;font-size:0.65rem;color:var(--muted);margin-bottom:0.5rem">ANNÉE 2022</p>
+        <div style="height:20px;background:var(--border);border-radius:4px;position:relative;overflow:hidden">
+          <div style="position:absolute;left:24%;width:8%;height:100%;background:rgba(232,184,75,0.4);border-radius:2px;display:flex;align-items:center;justify-content:center">
+            <span style="font-family:'DM Mono',monospace;font-size:0.55rem;color:var(--accent);white-space:nowrap">Ramadan 02/04–01/05</span>
+          </div>
+        </div>
+      </div>
+      <!-- 2023 bar -->
+      <div style="position:absolute;top:33px;left:0;right:0">
+        <p style="font-family:'DM Mono',monospace;font-size:0.65rem;color:var(--muted);margin-bottom:0.5rem">ANNÉE 2023</p>
+        <div style="height:20px;background:var(--border);border-radius:4px;position:relative;overflow:hidden">
+          <div style="position:absolute;left:21%;width:8%;height:100%;background:rgba(232,184,75,0.4);border-radius:2px;display:flex;align-items:center;justify-content:center">
+            <span style="font-family:'DM Mono',monospace;font-size:0.55rem;color:var(--accent);white-space:nowrap">Ramadan 22/03–20/04</span>
+          </div>
+        </div>
+      </div>
+      <!-- 2024 bar -->
+      <div style="position:absolute;top:66px;left:0;right:0">
+        <p style="font-family:'DM Mono',monospace;font-size:0.65rem;color:var(--muted);margin-bottom:0.5rem">ANNÉE 2024</p>
+        <div style="height:20px;background:var(--border);border-radius:4px;position:relative;overflow:hidden">
+          <div style="position:absolute;left:18%;width:8%;height:100%;background:rgba(232,184,75,0.4);border-radius:2px;display:flex;align-items:center;justify-content:center">
+            <span style="font-family:'DM Mono',monospace;font-size:0.55rem;color:var(--accent);white-space:nowrap">Ramadan 10/03–09/04</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="chart-grid-equal">
+    <div class="chart-box">
+      <p class="chart-box-title">CA par Catégorie — Ramadan vs Hors Ramadan</p>
+      <p class="chart-box-sub">MV_CA_MENSUEL — periode_ramadan TRUE/FALSE</p>
+      <div class="bar-chart" style="margin-top:1rem">
+        <p style="font-family:'DM Mono',monospace;font-size:0.62rem;color:var(--muted);margin-bottom:0.75rem">HORS RAMADAN</p>
+        <div class="bar-row" style="grid-template-columns:100px 1fr 60px">
+          <span class="bar-label">Electronique</span>
+          <div class="bar-track"><div class="bar-fill" style="width:100%;background:var(--accent2);animation-delay:0.1s"></div></div>
+          <span class="bar-val">310M</span>
+        </div>
+        <div class="bar-row" style="grid-template-columns:100px 1fr 60px">
+          <span class="bar-label">Mode</span>
+          <div class="bar-track"><div class="bar-fill" style="width:25%;background:var(--accent2);animation-delay:0.2s"></div></div>
+          <span class="bar-val">38M</span>
+        </div>
+        <div class="bar-row" style="grid-template-columns:100px 1fr 60px">
+          <span class="bar-label">Alimentation</span>
+          <div class="bar-track"><div class="bar-fill" style="width:12%;background:var(--accent2);animation-delay:0.3s"></div></div>
+          <span class="bar-val">18M</span>
+        </div>
+        <div class="divider"></div>
+        <p style="font-family:'DM Mono',monospace;font-size:0.62rem;color:var(--accent);margin-bottom:0.75rem">PÉRIODE RAMADAN</p>
+        <div class="bar-row" style="grid-template-columns:100px 1fr 60px">
+          <span class="bar-label">Electronique</span>
+          <div class="bar-track"><div class="bar-fill" style="width:88%;background:var(--accent);animation-delay:0.4s"></div></div>
+          <span class="bar-val" style="color:var(--accent)">14.8M</span>
+        </div>
+        <div class="bar-row" style="grid-template-columns:100px 1fr 60px">
+          <span class="bar-label">Mode</span>
+          <div class="bar-track"><div class="bar-fill" style="width:18%;background:var(--accent);animation-delay:0.5s"></div></div>
+          <span class="bar-val" style="color:var(--accent)">2.9M</span>
+        </div>
+        <div class="bar-row" style="grid-template-columns:100px 1fr 60px">
+          <span class="bar-label">Alimentation</span>
+          <div class="bar-track"><div class="bar-fill" style="width:4%;background:var(--accent3);animation-delay:0.6s"></div></div>
+          <span class="bar-val" style="color:var(--accent3)">0.6M</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="chart-box">
+      <p class="chart-box-title">Évolution Mensuelle — Alimentation</p>
+      <p class="chart-box-sub">Pic attendu en mois 3–4 (Ramadan)</p>
+      <svg viewBox="0 0 280 160" style="width:100%;margin-top:0.5rem">
+        <line x1="0" y1="30" x2="280" y2="30" stroke="#1e2535" stroke-width="1"/>
+        <line x1="0" y1="70" x2="280" y2="70" stroke="#1e2535" stroke-width="1"/>
+        <line x1="0" y1="110" x2="280" y2="110" stroke="#1e2535" stroke-width="1"/>
+        <!-- Ramadan zone -->
+        <rect x="46" y="0" width="46" height="130" fill="rgba(232,184,75,0.06)" rx="2"/>
+        <text x="69" y="10" text-anchor="middle" font-family="monospace" font-size="7" fill="#e8b84b">Ramadan</text>
+        <!-- Alimentation line -->
+        <polyline points="0,100 23,98 46,90 69,72 92,85 115,100 138,98 161,96 184,94 207,97 230,99 253,98 276,97"
+          fill="none" stroke="#4be8a8" stroke-width="2" stroke-linejoin="round"/>
+        <!-- Electronique line -->
+        <polyline points="0,40 23,38 46,36 69,34 92,37 115,40 138,39 161,38 184,37 207,39 230,40 253,39 276,38"
+          fill="none" stroke="#4b8de8" stroke-width="2" stroke-linejoin="round"/>
+        <!-- Month labels -->
+        <text x="0"   y="150" font-size="7" fill="#374151" font-family="monospace">J</text>
+        <text x="23"  y="150" font-size="7" fill="#374151" font-family="monospace">F</text>
+        <text x="46"  y="150" font-size="7" fill="#e8b84b" font-family="monospace">M</text>
+        <text x="69"  y="150" font-size="7" fill="#e8b84b" font-family="monospace">A</text>
+        <text x="92"  y="150" font-size="7" fill="#374151" font-family="monospace">M</text>
+        <text x="115" y="150" font-size="7" fill="#374151" font-family="monospace">J</text>
+        <text x="138" y="150" font-size="7" fill="#374151" font-family="monospace">J</text>
+        <text x="161" y="150" font-size="7" fill="#374151" font-family="monospace">A</text>
+        <text x="184" y="150" font-size="7" fill="#374151" font-family="monospace">S</text>
+        <text x="207" y="150" font-size="7" fill="#374151" font-family="monospace">O</text>
+        <text x="230" y="150" font-size="7" fill="#374151" font-family="monospace">N</text>
+        <text x="253" y="150" font-size="7" fill="#374151" font-family="monospace">D</text>
+        <!-- Legend -->
+        <circle cx="8" cy="140" r="3" fill="#4be8a8"/>
+        <text x="14" y="144" font-size="7" fill="#6b7280" font-family="monospace">Alimentation</text>
+        <circle cx="100" cy="140" r="3" fill="#4b8de8"/>
+        <text x="106" y="144" font-size="7" fill="#6b7280" font-family="monospace">Electronique</text>
+      </svg>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════
+     KEY INSIGHTS
+════════════════════════════════════════════════ -->
+<section id="insights" class="reveal">
+  <div class="section-header">
+    <div>
+      <p class="section-label">Synthèse — Conclusions</p>
+      <h2 class="section-title">5 Insights<br>Business Clés</h2>
+      <p class="section-desc">Conclusions analytiques issues du dashboard — recommandations pour le CEO Mexora.</p>
+    </div>
+  </div>
+
+  <div class="insight-grid">
+    <div class="insight-card">
+      <p class="insight-num">01</p>
+      <p class="insight-title">Rabat-Salé-Kénitra domine</p>
+      <p class="insight-body">La région Rabat-Salé-Kénitra génère le CA le plus élevé de façon constante sur 2022–2024, devançant Fès-Meknès et Oriental. <span class="insight-highlight">Mexora devrait renforcer sa logistique et ses campagnes marketing dans cette région.</span></p>
+    </div>
+    <div class="insight-card">
+      <p class="insight-num">02</p>
+      <p class="insight-title">Electronique règne à Tanger</p>
+      <p class="insight-body">Les 9 premiers produits à Tanger sont exclusivement de l'électronique. Le LG OLED 65" et le MacBook Air M3 dominent. <span class="insight-highlight">Stock stratégique à maintenir en priorité absolue pour Tanger.</span></p>
+    </div>
+    <div class="insight-card">
+      <p class="insight-num">03</p>
+      <p class="insight-title">Gold = 74.76% du CA</p>
+      <p class="insight-body">Les clients Gold représentent la majorité écrasante du revenu avec un panier de 11 435 MAD. <span class="insight-highlight">La rétention des clients Gold est l'action à impact business le plus élevé pour Mexora.</span></p>
+    </div>
+    <div class="insight-card">
+      <p class="insight-num">04</p>
+      <p class="insight-title">Electronique — taux retour alarmant</p>
+      <p class="insight-body">Le câble USB-C Braided atteint 7.51% de retour — le plus haut de tout le catalogue. <span class="insight-highlight">Révision qualité urgente des accessoires électroniques. Le seuil d'alerte de 5% est dépassé.</span></p>
+    </div>
+    <div class="insight-card">
+      <p class="insight-num">05</p>
+      <p class="insight-title">Effet Ramadan — opportunité inexploitée</p>
+      <p class="insight-body">Seulement 3.42% du CA annuel en Ramadan. L'Alimentation ne pic pas significativement. <span class="insight-highlight">Mexora a une opportunité de croissance dans les promotions Ramadan ciblées sur la catégorie Alimentation.</span></p>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<footer>
+  <div>
+    <p class="footer-brand">Mexora Analytics — Business Intelligence Dashboard</p>
+    <p class="footer-meta" style="margin-top:0.35rem">Abdelmalek Essaâdi University · Data Engineering · Mini-Project 1</p>
+  </div>
+  <div style="text-align:right">
+    <p class="footer-meta">Pipeline: Python ETL + PostgreSQL 18 + Power BI</p>
+    <p class="footer-meta" style="margin-top:0.2rem">49 567 commandes · 2 868 clients · 2022–2024</p>
+  </div>
+</footer>
+
+<style>
+@keyframes donutFill {
+  from { stroke-dasharray: 0 314; }
+}
+</style>
+
+<script>
+// Scroll reveal
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      entry.target.classList.add('visible');
+      // Stagger children with class reveal-child
+      const children = entry.target.querySelectorAll('.bar-fill, .tl-fill');
+      children.forEach((el, i) => {
+        if (!el.style.animationDelay) {
+          el.style.animationDelay = `${i * 0.06}s`;
+        }
+      });
+    }
+  });
+}, { threshold: 0.1 });
+
+document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+
+// Nav active state
+const sections = document.querySelectorAll('section[id], .hero');
+const navLinks = document.querySelectorAll('.nav-links a');
+
+window.addEventListener('scroll', () => {
+  let current = '';
+  sections.forEach(section => {
+    if (window.scrollY >= section.offsetTop - 100) {
+      current = section.id;
+    }
+  });
+  navLinks.forEach(link => {
+    link.style.color = '';
+    link.style.background = '';
+    if (link.getAttribute('href') === '#' + current) {
+      link.style.color = 'var(--accent)';
+      link.style.background = 'rgba(232,184,75,0.08)';
+    }
+  });
+});
+</script>
+
+</body>
+</html>
